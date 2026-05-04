@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PaymentIdempotency {
+public class Idempotency {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

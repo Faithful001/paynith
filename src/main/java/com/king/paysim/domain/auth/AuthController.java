@@ -5,6 +5,8 @@ import com.king.paysim.domain.auth.dtos.LoginResponseDto;
 import com.king.paysim.domain.auth.dtos.RegisterRequestDto;
 import com.king.paysim.domain.auth.dtos.RegisterResponseDto;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,8 +22,9 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public RegisterResponseDto Register (@Valid @RequestBody RegisterRequestDto payload){
-        return authService.register(payload);
+    public ResponseEntity<RegisterResponseDto> Register (@Valid @RequestBody RegisterRequestDto payload){
+        RegisterResponseDto response = authService.register(payload);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
