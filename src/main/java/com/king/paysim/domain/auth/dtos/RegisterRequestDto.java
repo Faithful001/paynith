@@ -15,6 +15,9 @@ public  record RegisterRequestDto (
         @NotBlank(message = "Email is required")
         String email,
 
+        @NotBlank(message = "Phone number is required")
+        String phoneNumber,
+
         @NotBlank(message = "Password is required")
         @Size(min = 6, message = "Password must be at least 6 characters")
         String password

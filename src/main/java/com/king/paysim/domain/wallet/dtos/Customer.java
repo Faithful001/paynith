@@ -1,9 +1,11 @@
 package com.king.paysim.domain.wallet.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record Customer(
-        long id,
-        String first_name,
-        String last_name,
+        Long id,
+        @JsonProperty("customer_code") String customerCode,
         String email,
-        String customer_code
+        @JsonProperty("first_name") String firstName,
+        @JsonProperty("last_name") String lastName
 ) {}

@@ -1,13 +1,11 @@
 package com.king.paysim.domain.user;
 
 import com.king.paysim.domain.user.dtos.UpdateUserDto;
-import com.king.paysim.domain.user.entitities.User;
+import com.king.paysim.domain.user.entities.User;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -17,7 +15,7 @@ public class UserService {
         this.repository = repository;
     }
 
-    public User getUserById (Long id) {
+    public User getUserById (String id) {
         return this.repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -26,7 +24,7 @@ public class UserService {
     }
 
     @Transactional
-    public User updateUser(Long id, UpdateUserDto payload) {
+    public User updateUser(String id, UpdateUserDto payload) {
 
         User user = repository.findById(id)
                 .orElseThrow(() ->

@@ -17,8 +17,8 @@ public class MessageConsumer {
 
     @KafkaListener(topics = "wallet.create", groupId = "wallet-service")
     public void consumeWalletTopic(String message){
+        String userId = message.replace("\"", "");
         try{
-            Long userId = Long.parseLong(message);
             CreateWalletDto payload = new CreateWalletDto(userId);
             this.walletService.create(payload);
         } catch (Exception err){

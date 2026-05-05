@@ -3,7 +3,7 @@ package com.king.paysim.domain.user;
 import com.king.paysim.common.responses.Response;
 import com.king.paysim.domain.user.dtos.UpdateUserDto;
 import com.king.paysim.domain.user.dtos.UserResponseDto;
-import com.king.paysim.domain.user.entitities.User;
+import com.king.paysim.domain.user.entities.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,7 +40,7 @@ public class UserController {
                     description = "User ID",
                     schema = @Schema(type = "string")
             )
-            @PathVariable Long id
+            @PathVariable String id
     ) {
         User user = this.userService.getUserById(id);
 
@@ -50,6 +50,7 @@ public class UserController {
                 user.getLastName(),
                 user.getEmail(),
                 user.getBvn(),
+                user.getPhoneNumber(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
@@ -71,7 +72,7 @@ public class UserController {
                     description = "User ID",
                     schema = @Schema(type = "string")
             )
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody UpdateUserDto payload
     ) {
         User user = this.userService.updateUser(id, payload);
@@ -82,6 +83,7 @@ public class UserController {
                 user.getLastName(),
                 user.getEmail(),
                 user.getBvn(),
+                user.getPhoneNumber(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );

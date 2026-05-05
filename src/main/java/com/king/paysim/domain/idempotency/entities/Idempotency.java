@@ -7,15 +7,15 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payment_idempotency", uniqueConstraints = @UniqueConstraint(columnNames = "idempotency_key"))
+@Table(name = "idempotency")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Idempotency {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(name = "idempotency_key", nullable = false, unique = true)
     private String idempotencyKey;

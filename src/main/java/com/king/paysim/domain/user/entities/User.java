@@ -1,4 +1,4 @@
-package com.king.paysim.domain.user.entitities;
+package com.king.paysim.domain.user.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(nullable = false)
     private String firstName;
@@ -32,7 +32,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = true)
+    @Column
     private String bvn;
 
     @Column(nullable = false, updatable = false)

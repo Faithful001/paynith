@@ -1,10 +1,8 @@
 package com.king.paysim.domain.wallet.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record Assignment(
-        long integration,
-        long assignee_id,
-        String assignee_type,
-        boolean expired,
-        String account_type,
-        String assigned_at
+        @JsonProperty("assignee_id") Long assigneeId,
+        @JsonProperty("assignee_type") String assigneeType
 ) {}
