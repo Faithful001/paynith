@@ -3,7 +3,7 @@ package com.king.paysim.domain.wallet.dtos;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record DedicatedAccountData(
-        Long id,
+        String id,
 
         @JsonProperty("account_number") String accountNumber,
         @JsonProperty("account_name") String accountName,

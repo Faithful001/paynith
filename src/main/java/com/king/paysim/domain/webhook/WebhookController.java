@@ -1,9 +1,10 @@
 package com.king.paysim.domain.webhook;
 
-import com.king.paysim.domain.wallet.WalletService;
+import com.king.paysim.domain.virtual_account.enums.ProviderName;
+import com.king.paysim.domain.webhook.providers.WebhookProvider;
+import com.king.paysim.domain.webhook.providers.WebhookProviderFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +25,19 @@ import java.util.HexFormat;
 @RequestMapping("/webhooks")
 public class WebhookController {
 
-    private final WalletService walletService;
     private final ObjectMapper objectMapper;
+    private final WebhookProviderFactory webhookProviderFactory;
+    @Value("${wallet.va.provider}")
+    private final String providerName;
 
-    public WebhookController(WalletService walletService, ObjectMapper objectMapper) {
-        this.walletService = walletService;
+    public WebhookController(
+            ObjectMapper objectMapper,
+            WebhookProviderFactory webhookProviderFactory,
+            String providerName
+    ) {
         this.objectMapper = objectMapper;
+        this.webhookProviderFactory = webhookProviderFactory;
+        this.providerName = providerName;
     }
 
     @Value("${PAYSTACK_SEC_KEY}")
@@ -37,11 +45,10 @@ public class WebhookController {
 
     @Operation(summary = "Handle webhook call from paystack")
     @PostMapping("/paystack")
-    public ResponseEntity<Void> handleWebhook(
+    public ResponseEntity<Void> handlePaystackWebhook(
             @RequestHeader(value = "x-paystack-signature", required = false) String signature,
             @RequestBody String payload) {
 
-        // Validate Signature
         if (!isValidSignature(payload, signature)) {
             log.warn("Invalid Paystack webhook signature");
             return ResponseEntity.status(401).build();
@@ -52,12 +59,11 @@ public class WebhookController {
             String event = node.path("event").asString();
             JsonNode data = node.path("data");
 
-            log.info("Received Paystack webhook: {}", event);
+            WebhookProvider provider = webhookProviderFactory.getProvider(ProviderName.valueOf((providerName)));
 
-            walletService.handlePaystackWebhook(event, data);
+            provider.handle(event, data);
 
             return ResponseEntity.ok().build();
-
         } catch (Exception e) {
             log.error("Error processing Paystack webhook", e);
             return ResponseEntity.status(500).build();

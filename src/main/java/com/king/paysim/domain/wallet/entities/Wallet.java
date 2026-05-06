@@ -38,7 +38,7 @@ public class Wallet {
     private String accountNumber;
     private String bankName;
     private String bankSlug;
-    private Long dedicatedAccountId;        // Paystack's internal ID
+    private String dedicatedAccountId;        // Paystack's internal ID
     private String customerCode;            // Paystack customer code
     private String assignmentId;
 
