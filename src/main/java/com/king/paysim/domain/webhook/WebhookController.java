@@ -15,8 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.MessageDigest;
 import java.util.HexFormat;
 
 @Tag(name = "Webhooks", description = "All webhooks")
@@ -27,70 +26,116 @@ public class WebhookController {
 
     private final ObjectMapper objectMapper;
     private final WebhookProviderFactory webhookProviderFactory;
-    @Value("${wallet.va.provider}")
-    private final String providerName;
-
-    public WebhookController(
-            ObjectMapper objectMapper,
-            WebhookProviderFactory webhookProviderFactory,
-            String providerName
-    ) {
-        this.objectMapper = objectMapper;
-        this.webhookProviderFactory = webhookProviderFactory;
-        this.providerName = providerName;
-    }
 
     @Value("${PAYSTACK_SEC_KEY}")
     private String paystackSecretKey;
 
-    @Operation(summary = "Handle webhook call from paystack")
+    @Value("${FLUTTERWAVE_WEBHOOK_HASH}")
+    private String flutterwaveSecret;
+
+    public WebhookController(
+            ObjectMapper objectMapper,
+            WebhookProviderFactory webhookProviderFactory
+    ) {
+        this.objectMapper = objectMapper;
+        this.webhookProviderFactory = webhookProviderFactory;
+    }
+
+    // ===================== FLUTTERWAVE =====================
+
+    @Operation(summary = "Handle Flutterwave webhook")
+    @PostMapping("/flutterwave")
+    public ResponseEntity<Void> handleFlutterwaveWebhook(
+            @RequestHeader(value = "flutterwave-signature", required = false) String signature,
+            @RequestBody String payload
+    ) {
+
+        if (!isValidHmacSha256(payload, signature, flutterwaveSecret)) {
+            log.warn("Invalid Flutterwave webhook signature");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            JsonNode root = objectMapper.readTree(payload);
+            String event = root.path("type").asText();
+            JsonNode data = root.path("data");
+
+            WebhookProvider provider =
+                    webhookProviderFactory.getProvider(ProviderName.FLUTTERWAVE);
+
+            provider.handle(event, data);
+            return ResponseEntity.ok().build();
+
+        } catch (Exception e) {
+            log.error("Flutterwave webhook processing failed", e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    // ===================== PAYSTACK =====================
+
+    @Operation(summary = "Handle Paystack webhook")
     @PostMapping("/paystack")
     public ResponseEntity<Void> handlePaystackWebhook(
             @RequestHeader(value = "x-paystack-signature", required = false) String signature,
-            @RequestBody String payload) {
+            @RequestBody String payload
+    ) {
 
-        if (!isValidSignature(payload, signature)) {
+        if (!isValidHmacSha512(payload, signature, paystackSecretKey)) {
             log.warn("Invalid Paystack webhook signature");
             return ResponseEntity.status(401).build();
         }
 
         try {
-            JsonNode node = objectMapper.readTree(payload);
-            String event = node.path("event").asString();
-            JsonNode data = node.path("data");
+            JsonNode root = objectMapper.readTree(payload);
+            String event = root.path("event").asText();
+            JsonNode data = root.path("data");
 
-            WebhookProvider provider = webhookProviderFactory.getProvider(ProviderName.valueOf((providerName)));
+            WebhookProvider provider =
+                    webhookProviderFactory.getProvider(ProviderName.PAYSTACK);
 
             provider.handle(event, data);
-
             return ResponseEntity.ok().build();
+
         } catch (Exception e) {
-            log.error("Error processing Paystack webhook", e);
+            log.error("Paystack webhook processing failed", e);
             return ResponseEntity.status(500).build();
         }
     }
 
-    private boolean isValidSignature(String payload, String signature) {
-        if (signature == null || signature.isBlank() || paystackSecretKey == null) {
-            log.error("Missing signature or secret key");
+    // ===================== SIGNATURE UTILS =====================
+
+    private boolean isValidHmacSha256(String payload, String signature, String secret) {
+        return isValidHmac(payload, signature, secret, "HmacSHA256");
+    }
+
+    private boolean isValidHmacSha512(String payload, String signature, String secret) {
+        return isValidHmac(payload, signature, secret, "HmacSHA512");
+    }
+
+    private boolean isValidHmac(
+            String payload,
+            String signature,
+            String secret,
+            String algorithm
+    ) {
+        if (signature == null || secret == null) {
             return false;
         }
 
         try {
-            Mac sha512Hmac = Mac.getInstance("HmacSHA512");
-            SecretKeySpec keySpec = new SecretKeySpec(
-                    paystackSecretKey.getBytes(StandardCharsets.UTF_8),
-                    "HmacSHA512"
+            Mac mac = Mac.getInstance(algorithm);
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), algorithm));
+            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            String computed = HexFormat.of().formatHex(hash);
+
+            return MessageDigest.isEqual(
+                    computed.getBytes(StandardCharsets.UTF_8),
+                    signature.getBytes(StandardCharsets.UTF_8)
             );
-            sha512Hmac.init(keySpec);
 
-            byte[] hmacBytes = sha512Hmac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-            String computedSignature = HexFormat.of().formatHex(hmacBytes);
-
-            return computedSignature.equals(signature);
-
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            log.error("Error computing HMAC signature", e);
+        } catch (Exception e) {
+            log.error("HMAC verification failed", e);
             return false;
         }
     }

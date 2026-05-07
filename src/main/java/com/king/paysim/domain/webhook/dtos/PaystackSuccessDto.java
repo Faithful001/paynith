@@ -1,8 +1,10 @@
-package com.king.paysim.domain.wallet.dtos;
+package com.king.paysim.domain.webhook.dtos;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.king.paysim.domain.wallet.dtos.Assignment;
+import com.king.paysim.domain.wallet.dtos.Customer;
 
-public record DedicatedAccountData(
+public record PaystackSuccessDto(
         String id,
 
         @JsonProperty("account_number") String accountNumber,

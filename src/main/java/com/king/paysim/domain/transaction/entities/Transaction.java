@@ -1,11 +1,11 @@
 package com.king.paysim.domain.transaction.entities;
 
+import com.king.paysim.domain.transaction.enums.TransactionStatus;
+import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.user.entities.User;
+import com.king.paysim.domain.wallet.entities.Wallet;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,19 +27,54 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(nullable = false)
+    private String currency = "NGN";
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wallet_id")
+    private Wallet wallet;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionType type;
+
+    @Column(unique = true)
+    private String providerRef;
+
+    @Column(unique = true, nullable = false)
+    private String reference;
+
+    @Column
+    private String narration;
+
+    @Column
+    private String recipientAccountNumber;
+
+    @Column
+    private String recipientBankName;
+
+    @Column
+    private String recipientAccountName;
+
+    @Column
+    private String failureReason;
+
+    @Column
+    private BigDecimal fee;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column()
+    @Column
     private LocalDateTime updatedAt;
 
     @PrePersist
@@ -53,6 +89,3 @@ public class Transaction {
         this.updatedAt = LocalDateTime.now();
     }
 }
-
-
-

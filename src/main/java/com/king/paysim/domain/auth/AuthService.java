@@ -76,7 +76,7 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid email or password");
         }
 
-        String token = jwt.generateToken(user.getEmail());
+        String token = jwt.generateToken(user.getId());
 
         UserResponseDto userResponse = new UserResponseDto(
                 user.getId(),

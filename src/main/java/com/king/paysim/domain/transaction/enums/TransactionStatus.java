@@ -1,4 +1,4 @@
-package com.king.paysim.domain.transaction.entities;
+package com.king.paysim.domain.transaction.enums;
 
 public enum TransactionStatus {
     PENDING,

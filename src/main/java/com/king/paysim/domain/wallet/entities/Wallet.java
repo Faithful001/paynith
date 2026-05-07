@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "wallets")
+@Table(name = "wallets", indexes = {@Index(name = "idx_wallet_user_id", columnList = "user_id")})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class Wallet {
@@ -20,7 +20,7 @@ public class Wallet {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @OneToOne(fetch =  FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
@@ -34,13 +34,11 @@ public class Wallet {
 
     private String failureReason;
 
-    // Paystack Dedicated Account fields
     private String accountNumber;
     private String bankName;
-    private String bankSlug;
-    private String dedicatedAccountId;        // Paystack's internal ID
-    private String customerCode;            // Paystack customer code
-    private String assignmentId;
+    private String providerRef;   // flw_ref
+    private String orderRef;      // order_ref
+    private String paymentNote;   // note — shown to user when paying
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -51,12 +51,14 @@ public class PaystackVAProvider implements VirtualAccountProvider {
                     null,
                     null,
                     null,
-                   null
+                   null,
+                    null
             );
 
         } catch (Exception e) {
             return new VirtualAccountResult(
                     false,
+                    null,
                     null,
                     null,
                     null,

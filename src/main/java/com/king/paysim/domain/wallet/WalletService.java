@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,15 +27,13 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final UserRepository userRepository;
     private final VirtualAccountProviderFactory vAccountProviderFactory;
-
-    @Value("${wallet.va.provider}")
     private final String providerName;
 
     public WalletService(
             WalletRepository walletRepository,
             UserRepository userRepository,
             VirtualAccountProviderFactory vAccountProviderFactory,
-            String providerName
+            @Value("${app.va.provider}") String providerName
     ) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
@@ -59,7 +59,7 @@ public class WalletService {
         wallet = walletRepository.save(wallet);
 
         VirtualAccountProvider provider = this.vAccountProviderFactory
-                .getProvider(ProviderName.valueOf((providerName)));
+                .getProvider(ProviderName.valueOf((providerName.toUpperCase())));
 
         VirtualAccountResult result = provider.createVirtualAccount(user);
 
@@ -67,8 +67,9 @@ public class WalletService {
             wallet.setStatus(WalletStatus.ACTIVE);
             wallet.setAccountNumber(result.accountNumber());
             wallet.setBankName(result.bankName());
-            wallet.setBankSlug(result.bankSlug());
-            wallet.setDedicatedAccountId(result.providerRef());
+            wallet.setProviderRef(result.providerRef());
+            wallet.setOrderRef(result.orderRef());
+            wallet.setPaymentNote(result.paymentNote());
         } else {
             wallet.setStatus(WalletStatus.FAILED);
             wallet.setFailureReason(result.errorMessage());
@@ -76,4 +77,12 @@ public class WalletService {
 
         return walletRepository.save(wallet);
     }
+
+    public List<Wallet> findAll(String userId) {
+        this.userRepository.findById(userId).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        return this.walletRepository.findAllByUserId(userId);
+    }
+
+
 }

@@ -2,7 +2,7 @@ package com.king.paysim.domain.webhook.providers;
 
 import com.king.paysim.domain.virtual_account.enums.ProviderName;
 import com.king.paysim.domain.wallet.WalletRepository;
-import com.king.paysim.domain.wallet.dtos.DedicatedAccountData;
+import com.king.paysim.domain.webhook.dtos.PaystackSuccessDto;
 import com.king.paysim.domain.wallet.entities.Wallet;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class PaystackWebhookProvider implements WebhookProvider {
         try {
             switch (event) {
                 case "dedicatedaccount.assign.success":
-                    DedicatedAccountData dedicatedData = convertToDedicatedAccountData(data);
+                    PaystackSuccessDto dedicatedData = convertToDedicatedAccountData(data);
                     handleAssignSuccess(dedicatedData);
                     break;
 
@@ -55,9 +55,9 @@ public class PaystackWebhookProvider implements WebhookProvider {
         }
     }
 
-    private DedicatedAccountData convertToDedicatedAccountData(JsonNode node) {
+    private PaystackSuccessDto convertToDedicatedAccountData(JsonNode node) {
         try {
-            return new ObjectMapper().treeToValue(node, DedicatedAccountData.class);
+            return new ObjectMapper().treeToValue(node, PaystackSuccessDto.class);
         } catch (Exception e) {
             log.error("Failed to convert JsonNode to DedicatedAccountData", e);
             throw new RuntimeException("Failed to parse dedicated account data", e);
@@ -69,7 +69,7 @@ public class PaystackWebhookProvider implements WebhookProvider {
         return ProviderName.PAYSTACK;
     }
 
-    private void handleAssignSuccess(DedicatedAccountData data) {
+    private void handleAssignSuccess(PaystackSuccessDto data) {
         if (data.customer() == null) {
             log.warn("No customer data in dedicatedaccount.assign.success");
             return;
@@ -82,9 +82,9 @@ public class PaystackWebhookProvider implements WebhookProvider {
             wallet.setStatus(WalletStatus.ACTIVE);
             wallet.setAccountNumber(data.accountNumber());
             wallet.setBankName(data.bankName());
-            wallet.setBankSlug(data.bankSlug());
-            wallet.setDedicatedAccountId(data.id());
-            wallet.setCustomerCode(data.customer().customerCode());
+//            wallet.setBankSlug(data.bankSlug());
+//            wallet.setDedicatedAccountId(data.id());
+//            wallet.setCustomerCode(data.customer().customerCode());
 
             walletRepository.save(wallet);
             log.info("Wallet successfully activated for user {}", wallet.getUser().getId());
