@@ -4,6 +4,7 @@ import com.king.paysim.domain.user.entities.User;
 import com.king.paysim.domain.virtual_account.dtos.VirtualAccountResult;
 import com.king.paysim.domain.virtual_account.enums.ProviderName;
 import com.king.paysim.domain.virtual_account.dtos.CreateVAResponse;
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class PaystackVAProvider implements VirtualAccountProvider {
     }
 
     @Override
-    public VirtualAccountResult createVirtualAccount(User user) {
+    public VirtualAccountResult createVirtualAccount(User user, WalletCurrency currency) {
         try {
             Map<String, Object> body = Map.of(
                     "email", user.getEmail(),
@@ -35,7 +36,7 @@ public class PaystackVAProvider implements VirtualAccountProvider {
                     "last_name", user.getLastName(),
                     "phone", formatPhone(user.getPhoneNumber()),
                     "preferred_bank", "wema-bank",
-                    "country", "NG"
+                    "country", currency
             );
 
             CreateVAResponse response = paystackClient.post()

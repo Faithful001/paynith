@@ -1,20 +1,22 @@
 package com.king.paysim.domain.webhook.dtos;
 
 public record FlutterwaveChargeCompletedDto(
-        ChargeData data,
-        String type
+        String id,
+        String tx_ref,
+        String flw_ref,
+        long amount,
+        String currency,
+        String charged_amount,
+        String status,
+        String payment_type,
+        String created_at,
+        Customer customer
 ) {
-    public record ChargeData(
-            String id,
-            long amount,
-            String currency,
-            String status,
-            String reference,
-            Customer customer
-    ) {}
-
     public record Customer(
-            String id,
-            String email
+            long id,
+            String name,
+            String phone_number,
+            String email,
+            String created_at
     ) {}
 }

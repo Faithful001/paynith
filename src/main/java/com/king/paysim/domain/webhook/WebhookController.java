@@ -46,18 +46,26 @@ public class WebhookController {
     @Operation(summary = "Handle Flutterwave webhook")
     @PostMapping("/flutterwave")
     public ResponseEntity<Void> handleFlutterwaveWebhook(
-            @RequestHeader(value = "flutterwave-signature", required = false) String signature,
+            @RequestHeader(value = "verif-hash", required = false) String signature,
             @RequestBody String payload
     ) {
 
-        if (!isValidHmacSha256(payload, signature, flutterwaveSecret)) {
+        log.info("Flutterwave webhook received. Signature: {}", signature);
+        log.info("Flutterwave webhook payload: {}", payload);
+
+        if (signature == null || !signature.equals(flutterwaveSecret)) {
             log.warn("Invalid Flutterwave webhook signature");
             return ResponseEntity.status(401).build();
         }
 
+//        if (!isValidHmacSha256(payload, signature, flutterwaveSecret)) {
+//            log.warn("Invalid Flutterwave webhook signature");
+//            return ResponseEntity.status(401).build();
+//        }
+
         try {
             JsonNode root = objectMapper.readTree(payload);
-            String event = root.path("type").asText();
+            String event = root.path("event").asString();
             JsonNode data = root.path("data");
 
             WebhookProvider provider =

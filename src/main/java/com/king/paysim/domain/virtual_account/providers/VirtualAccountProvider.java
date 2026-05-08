@@ -3,10 +3,11 @@ package com.king.paysim.domain.virtual_account.providers;
 import com.king.paysim.domain.user.entities.User;
 import com.king.paysim.domain.virtual_account.dtos.VirtualAccountResult;
 import com.king.paysim.domain.virtual_account.enums.ProviderName;
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
 
 public interface VirtualAccountProvider {
 
-    VirtualAccountResult createVirtualAccount(User user);
+    VirtualAccountResult createVirtualAccount(User user, WalletCurrency currency);
 
     ProviderName getProviderName();
 

@@ -8,6 +8,7 @@ import com.king.paysim.domain.virtual_account.providers.VirtualAccountProvider;
 import com.king.paysim.domain.virtual_account.providers.VirtualAccountProviderFactory;
 import com.king.paysim.domain.wallet.dtos.CreateWalletDto;
 import com.king.paysim.domain.wallet.entities.Wallet;
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -61,12 +62,13 @@ public class WalletService {
         VirtualAccountProvider provider = this.vAccountProviderFactory
                 .getProvider(ProviderName.valueOf((providerName.toUpperCase())));
 
-        VirtualAccountResult result = provider.createVirtualAccount(user);
+        VirtualAccountResult result = provider.createVirtualAccount(user, wallet.getCurrency());
 
         if (result.success()) {
             wallet.setStatus(WalletStatus.ACTIVE);
             wallet.setAccountNumber(result.accountNumber());
             wallet.setBankName(result.bankName());
+            wallet.setCurrency(WalletCurrency.NGN);
             wallet.setProviderRef(result.providerRef());
             wallet.setOrderRef(result.orderRef());
             wallet.setPaymentNote(result.paymentNote());

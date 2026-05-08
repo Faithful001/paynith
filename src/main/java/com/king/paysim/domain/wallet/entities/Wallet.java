@@ -1,6 +1,7 @@
 package com.king.paysim.domain.wallet.entities;
 
 import com.king.paysim.domain.user.entities.User;
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,6 +25,10 @@ public class Wallet {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
+
+    @Enumerated(EnumType.STRING)
+    @Column
+    private WalletCurrency currency;
 
     @Column(nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;

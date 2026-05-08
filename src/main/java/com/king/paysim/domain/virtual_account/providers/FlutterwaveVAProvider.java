@@ -5,6 +5,7 @@ import com.king.paysim.domain.virtual_account.dtos.FlutterwaveData;
 import com.king.paysim.domain.virtual_account.dtos.FlutterwaveVAResponse;
 import com.king.paysim.domain.virtual_account.dtos.VirtualAccountResult;
 import com.king.paysim.domain.virtual_account.enums.ProviderName;
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -28,10 +29,11 @@ public class FlutterwaveVAProvider implements VirtualAccountProvider {
     }
 
     @Override
-    public VirtualAccountResult createVirtualAccount(User user) {
+    public VirtualAccountResult createVirtualAccount(User user, WalletCurrency currency) {
         try {
             Map<String, Object> body = Map.of(
                     "email", user.getEmail(),
+                    "currency", currency,
                     "tx_ref", "paysim_" + user.getId(),
                     "phonenumber", user.getPhoneNumber(),
                     "is_permanent", true,
