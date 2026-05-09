@@ -1,24 +1,33 @@
 package com.king.paysim.domain.webhook.providers;
 
+import com.king.paysim.domain.transaction.TransactionService;
+import com.king.paysim.domain.transaction.dtos.CreateTransactionDto;
+import com.king.paysim.domain.transaction.entities.Transaction;
+import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.virtual_account.enums.ProviderName;
 import com.king.paysim.domain.wallet.WalletRepository;
+import com.king.paysim.domain.wallet.entities.Wallet;
 import com.king.paysim.domain.webhook.dtos.FlutterwaveChargeCompletedDto;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Slf4j
 @Service
 public class FlutterwaveWebhookProvider implements WebhookProvider {
 
     private final WalletRepository walletRepository;
+    private final TransactionService transactionService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public FlutterwaveWebhookProvider(WalletRepository walletRepository) {
+    public FlutterwaveWebhookProvider(WalletRepository walletRepository, TransactionService transactionService) {
         this.walletRepository = walletRepository;
+        this.transactionService = transactionService;
     }
 
     @Override
@@ -42,37 +51,73 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
 
     // ===================== HANDLERS =====================
 
-    private void handleChargeCompleted(JsonNode data) {
-        try {
-            FlutterwaveChargeCompletedDto charge = objectMapper.treeToValue(data, FlutterwaveChargeCompletedDto.class);
 
-            if (!"successful".equalsIgnoreCase(charge.status())) {
-                log.warn("Charge not successful: {}", charge.status());
-                return;
-            }
+    private void creditWallet(
+            Wallet wallet,
+            FlutterwaveChargeCompletedDto charge,
+            String txRef,
+            String userId
+    ) {
 
-            // extract userId from tx_ref "paysim_{userId}"
-            String txRef = charge.tx_ref();
-            if (txRef == null || !txRef.startsWith("paysim_")) {
-                log.warn("Unexpected tx_ref format: {}", txRef);
-                return;
-            }
+        BigDecimal amount = BigDecimal.valueOf(charge.amount());
 
-            String userId = txRef.replace("paysim_", "");
+        // Update wallet balance
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
 
-            walletRepository.findByUserId(userId)
-                    .ifPresentOrElse(wallet -> {
-                        wallet.setBalance(wallet.getBalance().add(BigDecimal.valueOf(charge.amount())));
-                        walletRepository.save(wallet);
-                        log.info("Wallet funded | UserId={} | Amount={}", userId, charge.amount());
-                    }, () -> log.warn("Wallet not found for userId: {}", userId));
+        // Create transaction record
+        CreateTransactionDto transactionPayload = CreateTransactionDto.builder()
+                .amount(amount)
+                .currency(charge.currency())
+                .walletId(wallet.getId())
+                .transactionType(TransactionType.CREDIT)
+                .providerRef(Optional.ofNullable(charge.tx_ref()))
+                .reference(Optional.ofNullable(txRef))
+                .build();
 
-        } catch (Exception e) {
-            log.error("Failed to process charge.completed", e);
+        transactionService.create(transactionPayload, userId);
+
+        log.info(
+                "Wallet credited successfully | UserId={} | WalletId={} | Amount={} | Ref={}",
+                userId,
+                wallet.getId(),
+                amount,
+                txRef
+        );
+    }
+
+    @Transactional
+    public void handleChargeCompleted(JsonNode data) {
+        FlutterwaveChargeCompletedDto charge = objectMapper
+                .treeToValue(data, FlutterwaveChargeCompletedDto.class);
+
+        if (!"successful".equalsIgnoreCase(charge.status())) {
+            log.warn("Charge not successful: {}", charge.status()); return;
         }
+        // extract userId from tx_ref "paysim_{userId}"
+        String txRef = charge.tx_ref();
+        if (txRef == null || !txRef.startsWith("paysim_")) {
+            log.warn("Unexpected tx_ref format: {}", txRef); return;
+        }
+
+        if (transactionService.existsByReference(txRef)) {
+            log.warn("Duplicate webhook ignored | Ref={}", txRef);
+            return;
+        }
+
+        String userId = txRef.replace("paysim_", "");
+
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> {
+                    log.warn("Wallet not found for userId: {}", userId);
+                    return new IllegalStateException("Wallet not found");
+                });
+
+        creditWallet(wallet, charge, txRef, userId);
     }
 
     // Triggered when a virtual account receives a bank transfer
+    @Transactional
     private void handleVirtualAccountCredited(JsonNode data) {
         try {
             String accountNumber = data.path("account_number").asString(null);
@@ -97,36 +142,42 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
     }
 
     // Triggered when a transfer/withdrawal is successfully sent out
+    @Transactional
     private void handleTransferCompleted(JsonNode data) {
         try {
-            FlutterwaveChargeCompletedDto charge = objectMapper.treeToValue(data, FlutterwaveChargeCompletedDto.class);
+            FlutterwaveChargeCompletedDto charge = objectMapper
+                    .treeToValue(data, FlutterwaveChargeCompletedDto.class);
 
             if (!"successful".equalsIgnoreCase(charge.status())) {
-                log.warn("Charge not successful: {}", charge.status());
-                return;
+                log.warn("Charge not successful: {}", charge.status()); return;
             }
-
             // extract userId from tx_ref "paysim_{userId}"
             String txRef = charge.tx_ref();
             if (txRef == null || !txRef.startsWith("paysim_")) {
-                log.warn("Unexpected tx_ref format: {}", txRef);
+                log.warn("Unexpected tx_ref format: {}", txRef); return;
+            }
+
+            if (transactionService.existsByReference(txRef)) {
+                log.warn("Duplicate webhook ignored | Ref={}", txRef);
                 return;
             }
 
             String userId = txRef.replace("paysim_", "");
 
-            walletRepository.findByUserId(userId)
-                    .ifPresentOrElse(wallet -> {
-                        wallet.setBalance(wallet.getBalance().add(BigDecimal.valueOf(charge.amount())));
-                        walletRepository.save(wallet);
-                        log.info("Wallet funded | UserId={} | Amount={}", userId, charge.amount());
-                    }, () -> log.warn("Wallet not found for userId: {}", userId));
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> {
+                        log.warn("Wallet not found for userId: {}", userId);
+                        return new IllegalStateException("Wallet not found");
+                    });
+
+            creditWallet(wallet, charge, txRef, userId);
 
         } catch (Exception e) {
             log.error("Failed to process charge.completed", e);
         }
     }
 
+    @Transactional
     private void handleTransferFailed(JsonNode data) {
         try {
             String reference = data.path("reference").asString(null);
@@ -142,6 +193,7 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
         }
     }
 
+    @Transactional
     private void handleRefundCompleted(JsonNode data) {
         try {
             String txRef = data.path("tx_ref").asString(null);

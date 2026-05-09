@@ -1,11 +1,13 @@
 package com.king.paysim.domain.webhook.dtos;
 
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
+
 public record FlutterwaveChargeCompletedDto(
         String id,
         String tx_ref,
         String flw_ref,
         long amount,
-        String currency,
+        WalletCurrency currency,
         String charged_amount,
         String status,
         String payment_type,

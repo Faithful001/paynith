@@ -4,6 +4,7 @@ import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.user.entities.User;
 import com.king.paysim.domain.wallet.entities.Wallet;
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
@@ -27,8 +28,9 @@ public class Transaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String currency = "NGN";
+    private WalletCurrency currency = WalletCurrency.NGN;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)

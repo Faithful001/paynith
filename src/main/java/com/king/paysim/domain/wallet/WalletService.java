@@ -80,10 +80,14 @@ public class WalletService {
         return walletRepository.save(wallet);
     }
 
-    public List<Wallet> findAll(String userId) {
+    public Wallet find(String userId) {
         this.userRepository.findById(userId).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        return this.walletRepository.findAllByUserId(userId);
+        return this.walletRepository.findByUserId(userId).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    public Wallet findById(String walletId) {
+        return this.walletRepository.findById(walletId).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
     }
 
 

@@ -96,7 +96,7 @@ public class WebhookController {
 
         try {
             JsonNode root = objectMapper.readTree(payload);
-            String event = root.path("event").asText();
+            String event = root.path("event").asString();
             JsonNode data = root.path("data");
 
             WebhookProvider provider =
