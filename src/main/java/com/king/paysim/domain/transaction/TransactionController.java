@@ -1,5 +1,6 @@
 package com.king.paysim.domain.transaction;
 
+import com.king.paysim.common.responses.PaginatedResponse;
 import com.king.paysim.common.responses.Response;
 import com.king.paysim.common.utils.AuthUtil;
 import com.king.paysim.domain.transaction.entities.Transaction;
@@ -28,14 +29,14 @@ public class TransactionController {
     public ResponseEntity<Transaction> getById(
             @PathVariable String transactionId
     ) {
-        String userId = authUtil.getAuthUser().getId();
+        String userId = authUtil.getAuthUserId();
         return ResponseEntity.ok(
                 transactionService.getById(transactionId, userId)
         );
     }
 
     @GetMapping
-    public ResponseEntity<Response<Page<Transaction>>> getAllByUser(
+    public ResponseEntity<Response<PaginatedResponse<Transaction>>> getAllByUser(
             @RequestParam(required = false) TransactionType type,
             @RequestParam(required = false) TransactionStatus status,
             @RequestParam(required = false) String reference,
@@ -43,21 +44,16 @@ public class TransactionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        String userId = authUtil.getAuthUser().getId();
+        String userId = authUtil.getAuthUserId();
 
-        return ResponseEntity.ok(
-                Response.success("Transactions retrieved",
-                transactionService.findUserTransactions(
-                        userId,
-                        type,
-                        status,
-                        reference,
-                        providerRef,
-                        page,
-                        size
-                )
-                )
+        Page<Transaction> transactions = transactionService.findUserTransactions(
+                userId, type, status, reference, providerRef, page, size
         );
+
+        return ResponseEntity.ok(Response.success(
+                "Transactions retrieved",
+                PaginatedResponse.from(transactions)
+        ));
     }
 
     @GetMapping("/wallet/{walletId}")

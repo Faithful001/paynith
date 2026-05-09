@@ -27,4 +27,14 @@ public class AuthUtil {
 
         return this.userRepository.findById(userId).orElseThrow(()->new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not authenticated"));
     }
+
+    public String getAuthUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not authenticated");
+        }
+
+        return (String) authentication.getPrincipal();
+    }
 }
