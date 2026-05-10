@@ -1,8 +1,7 @@
 package com.king.paysim.domain.user;
 
-import com.king.paysim.domain.user.dtos.UpdateUserDto;
-import com.king.paysim.domain.user.entities.User;
-import io.jsonwebtoken.*;
+import com.king.paysim.domain.user.dto.UpdateUserDto;
+import com.king.paysim.domain.user.entity.User;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

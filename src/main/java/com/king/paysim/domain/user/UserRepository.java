@@ -1,6 +1,6 @@
 package com.king.paysim.domain.user;
 
-import com.king.paysim.domain.user.entities.User;
+import com.king.paysim.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

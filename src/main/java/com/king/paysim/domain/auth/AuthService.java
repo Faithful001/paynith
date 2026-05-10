@@ -1,13 +1,13 @@
 package com.king.paysim.domain.auth;
 
-import com.king.paysim.common.utils.JwtUtil;
-import com.king.paysim.core.kafka.MessageProducer;
-import com.king.paysim.domain.auth.dtos.LoginRequestDto;
-import com.king.paysim.domain.auth.dtos.LoginResponseDto;
-import com.king.paysim.domain.auth.dtos.RegisterRequestDto;
+import com.king.paysim.common.util.JwtUtil;
+import com.king.paysim.infrastructure.kafka.MessageProducer;
+import com.king.paysim.domain.auth.dto.LoginRequestDto;
+import com.king.paysim.domain.auth.dto.LoginResponseDto;
+import com.king.paysim.domain.auth.dto.RegisterRequestDto;
 import com.king.paysim.domain.user.UserRepository;
-import com.king.paysim.domain.user.dtos.UserResponseDto;
-import com.king.paysim.domain.user.entities.User;
+import com.king.paysim.domain.user.dto.UserResponseDto;
+import com.king.paysim.domain.user.entity.User;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

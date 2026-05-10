@@ -1,8 +1,8 @@
 package com.king.paysim.domain.webhook;
 
-import com.king.paysim.domain.virtual_account.enums.ProviderName;
-import com.king.paysim.domain.webhook.providers.WebhookProvider;
-import com.king.paysim.domain.webhook.providers.WebhookProviderFactory;
+import com.king.paysim.domain.virtualaccount.enums.ProviderName;
+import com.king.paysim.domain.webhook.provider.WebhookProvider;
+import com.king.paysim.domain.webhook.provider.WebhookProviderFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;

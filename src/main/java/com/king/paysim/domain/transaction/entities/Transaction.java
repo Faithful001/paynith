@@ -2,8 +2,8 @@ package com.king.paysim.domain.transaction.entities;
 
 import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
-import com.king.paysim.domain.user.entities.User;
-import com.king.paysim.domain.wallet.entities.Wallet;
+import com.king.paysim.domain.user.entity.User;
+import com.king.paysim.domain.wallet.entity.Wallet;
 import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import jakarta.persistence.*;
 import lombok.*;

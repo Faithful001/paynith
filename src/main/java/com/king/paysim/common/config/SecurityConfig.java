@@ -1,6 +1,6 @@
 package com.king.paysim.common.config;
 
-import com.king.paysim.common.interceptors.JwtAuthFilter;
+import com.king.paysim.common.interceptor.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

@@ -5,9 +5,9 @@ import com.king.paysim.domain.transaction.entities.Transaction;
 import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.user.UserRepository;
-import com.king.paysim.domain.user.entities.User;
+import com.king.paysim.domain.user.entity.User;
 import com.king.paysim.domain.wallet.WalletRepository;
-import com.king.paysim.domain.wallet.entities.Wallet;
+import com.king.paysim.domain.wallet.entity.Wallet;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -49,6 +48,7 @@ public class TransactionService {
         Wallet wallet = walletRepository.findById(payload.walletId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
 
+        log.info("about to create transaction");
         Transaction transaction = Transaction.builder()
                 .amount(payload.amount())
                 .currency(payload.currency())
@@ -65,6 +65,7 @@ public class TransactionService {
                 .fee(payload.fee())
                 .build();
 
+        log.info("about to save transaction");
         return transactionRepository.save(transaction);
     }
 

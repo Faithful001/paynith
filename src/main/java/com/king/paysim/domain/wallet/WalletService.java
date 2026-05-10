@@ -1,13 +1,18 @@
 package com.king.paysim.domain.wallet;
 
+import com.king.paysim.domain.transaction.TransactionService;
+import com.king.paysim.domain.transaction.dtos.CreateTransactionDto;
+import com.king.paysim.domain.transaction.entities.Transaction;
+import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.user.UserRepository;
-import com.king.paysim.domain.user.entities.User;
-import com.king.paysim.domain.virtual_account.dtos.VirtualAccountResult;
-import com.king.paysim.domain.virtual_account.enums.ProviderName;
-import com.king.paysim.domain.virtual_account.providers.VirtualAccountProvider;
-import com.king.paysim.domain.virtual_account.providers.VirtualAccountProviderFactory;
-import com.king.paysim.domain.wallet.dtos.CreateWalletDto;
-import com.king.paysim.domain.wallet.entities.Wallet;
+import com.king.paysim.domain.user.entity.User;
+import com.king.paysim.domain.virtualaccount.dto.VirtualAccountResult;
+import com.king.paysim.domain.virtualaccount.enums.ProviderName;
+import com.king.paysim.domain.virtualaccount.VirtualAccountProvider;
+import com.king.paysim.domain.virtualaccount.VirtualAccountProviderFactory;
+import com.king.paysim.domain.wallet.dto.CreateWalletDto;
+import com.king.paysim.domain.wallet.dto.WithdrawalDto;
+import com.king.paysim.domain.wallet.entity.Wallet;
 import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
 import jakarta.transaction.Transactional;
@@ -18,8 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -29,17 +34,20 @@ public class WalletService {
     private final UserRepository userRepository;
     private final VirtualAccountProviderFactory vAccountProviderFactory;
     private final String providerName;
+    private final TransactionService transactionService;
 
     public WalletService(
             WalletRepository walletRepository,
             UserRepository userRepository,
             VirtualAccountProviderFactory vAccountProviderFactory,
-            @Value("${app.va.provider}") String providerName
+            @Value("${app.va.provider}") String providerName,
+            TransactionService transactionService
     ) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
         this.vAccountProviderFactory = vAccountProviderFactory;
         this.providerName = providerName;
+        this.transactionService = transactionService;
     }
 
     @Transactional
@@ -78,6 +86,34 @@ public class WalletService {
         }
 
         return walletRepository.save(wallet);
+    }
+
+    public void withdraw(String userId, WithdrawalDto payload){
+
+        Wallet wallet = this.walletRepository.findByUserId(userId).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
+
+        if (wallet.getBalance().compareTo(payload.amount()) < 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(payload.amount()));
+        walletRepository.save(wallet);
+
+        String reference = "paysim_withdrawal_" + UUID.randomUUID();
+
+        Transaction transaction = transactionService.create(new CreateTransactionDto(
+                payload.amount(),
+                WalletCurrency.NGN,
+                wallet.getId(),
+                TransactionType.WITHDRAWAL,
+                Optional.empty(),
+                Optional.of(reference),
+                payload.narration(),
+                Optional.of(payload.accountNumber()),
+                Optional.empty(),
+                Optional.ofNullable(payload.accountName()),
+                BigDecimal.ZERO
+        ), userId);
     }
 
     public Wallet find(String userId) {

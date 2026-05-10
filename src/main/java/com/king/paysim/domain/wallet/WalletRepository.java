@@ -1,6 +1,6 @@
 package com.king.paysim.domain.wallet;
 
-import com.king.paysim.domain.wallet.entities.Wallet;
+import com.king.paysim.domain.wallet.entity.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

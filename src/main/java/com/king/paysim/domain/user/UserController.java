@@ -1,9 +1,9 @@
 package com.king.paysim.domain.user;
 
-import com.king.paysim.common.responses.Response;
-import com.king.paysim.domain.user.dtos.UpdateUserDto;
-import com.king.paysim.domain.user.dtos.UserResponseDto;
-import com.king.paysim.domain.user.entities.User;
+import com.king.paysim.common.response.Response;
+import com.king.paysim.domain.user.dto.UpdateUserDto;
+import com.king.paysim.domain.user.dto.UserResponseDto;
+import com.king.paysim.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;

@@ -1,11 +1,11 @@
 package com.king.paysim.domain.auth;
 
-import com.king.paysim.common.responses.Response;
-import com.king.paysim.domain.auth.dtos.LoginRequestDto;
-import com.king.paysim.domain.auth.dtos.LoginResponseDto;
-import com.king.paysim.domain.auth.dtos.RegisterRequestDto;
-import com.king.paysim.domain.auth.dtos.RegisterResponseDto;
-import com.king.paysim.domain.user.dtos.UserResponseDto;
+import com.king.paysim.common.response.Response;
+import com.king.paysim.domain.auth.dto.LoginRequestDto;
+import com.king.paysim.domain.auth.dto.LoginResponseDto;
+import com.king.paysim.domain.auth.dto.RegisterRequestDto;
+import com.king.paysim.domain.auth.dto.RegisterResponseDto;
+import com.king.paysim.domain.user.dto.UserResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @Tag(name = "Auth Controller", description = "Authentication endpoints")
 @RestController

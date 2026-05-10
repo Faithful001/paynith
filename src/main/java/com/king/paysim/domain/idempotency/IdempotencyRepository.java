@@ -1,6 +1,6 @@
 package com.king.paysim.domain.idempotency;
 
-import com.king.paysim.domain.idempotency.entities.Idempotency;
+import com.king.paysim.domain.idempotency.entity.Idempotency;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

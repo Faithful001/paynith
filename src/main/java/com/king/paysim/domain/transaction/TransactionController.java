@@ -1,14 +1,12 @@
 package com.king.paysim.domain.transaction;
 
-import com.king.paysim.common.responses.PaginatedResponse;
-import com.king.paysim.common.responses.Response;
-import com.king.paysim.common.utils.AuthUtil;
+import com.king.paysim.common.response.PaginatedResponse;
+import com.king.paysim.common.response.Response;
+import com.king.paysim.common.util.AuthUtil;
 import com.king.paysim.domain.transaction.entities.Transaction;
 import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
-import com.king.paysim.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
