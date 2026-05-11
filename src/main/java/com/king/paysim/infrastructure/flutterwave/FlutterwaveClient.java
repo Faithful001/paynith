@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class FlutterwaveClient {
     @Bean("flutterwaveWebClient")
     public WebClient flutterwaveWebClient(@Value("${FLUTTERWAVE_SEC_KEY}") String secretKey) {
+        System.out.println("secretKey: " + secretKey);
         return WebClient.builder()
                 .baseUrl("https://api.flutterwave.com/v3")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)

@@ -3,9 +3,11 @@ package com.king.paysim.domain.wallet;
 import com.king.paysim.common.response.Response;
 import com.king.paysim.common.util.AuthUtil;
 import com.king.paysim.domain.user.entity.User;
+import com.king.paysim.domain.wallet.dto.VerifyAccountDto;
 import com.king.paysim.domain.wallet.dto.WithdrawalDto;
 import com.king.paysim.domain.wallet.dto.WithdrawalResult;
 import com.king.paysim.domain.wallet.entity.Wallet;
+import com.king.paysim.infrastructure.flutterwave.FlutterwaveService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,10 +27,12 @@ import org.springframework.web.bind.annotation.*;
 public class WalletController {
     private final WalletService walletService;
     private final AuthUtil authUtil;
+    private final FlutterwaveService flutterwaveService;
 
-    public WalletController(WalletService walletService, AuthUtil authUtil) {
+    public WalletController(WalletService walletService, AuthUtil authUtil, FlutterwaveService flutterwaveService) {
         this.walletService = walletService;
         this.authUtil = authUtil;
+        this.flutterwaveService = flutterwaveService;
     }
 
     @Operation(summary = "Find all user wallets")
@@ -64,6 +68,23 @@ public class WalletController {
         WithdrawalResult result = this.walletService.withdraw(userId, payload, idempotencyKey);
 
         return ResponseEntity.ok(Response.success("Withdrawal initiated", result));
+    }
+
+    // get list of Nigerian banks
+    @GetMapping("/banks")
+    public ResponseEntity<Response<?>> getBanks() {
+        Object banks = flutterwaveService.getBanks();
+        return ResponseEntity.ok(Response.success("Banks retrieved", banks));
+    }
+
+    // verify bank account before withdrawal
+    @PostMapping("/verify-account")
+    public ResponseEntity<Response<?>> verifyAccount(@RequestBody VerifyAccountDto payload) {
+        Object result = flutterwaveService.verifyBankAccount(
+                payload.accountNumber(),
+                payload.bankCode()
+        );
+        return ResponseEntity.ok(Response.success("Account verified", result));
     }
 
     @Operation(summary = "Update user by ID")
