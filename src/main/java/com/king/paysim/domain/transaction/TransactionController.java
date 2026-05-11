@@ -3,7 +3,7 @@ package com.king.paysim.domain.transaction;
 import com.king.paysim.common.response.PaginatedResponse;
 import com.king.paysim.common.response.Response;
 import com.king.paysim.common.util.AuthUtil;
-import com.king.paysim.domain.transaction.entities.Transaction;
+import com.king.paysim.domain.transaction.entity.Transaction;
 import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import lombok.RequiredArgsConstructor;

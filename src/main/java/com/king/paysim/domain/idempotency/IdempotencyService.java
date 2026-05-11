@@ -3,6 +3,7 @@ package com.king.paysim.domain.idempotency;
 import com.king.paysim.domain.idempotency.entity.Idempotency;
 import com.king.paysim.domain.idempotency.enums.IdempotencyStatus;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,29 +18,31 @@ public class IdempotencyService {
     }
 
     @Transactional
-    public Idempotency create(Idempotency entity){
-        //check if the idempotency key already exists
-        Optional<Idempotency> existing = repository.findByIdempotencyKey(entity.getIdempotencyKey());
+    public Idempotency create(Idempotency entity) {
+        try {
+            return repository.save(entity);
+        } catch (DataIntegrityViolationException ex) {
 
-        if (existing.isPresent()){
-            return existing.get();
+            // Another request already created it
+            return repository.findByIdempotencyKey(entity.getIdempotencyKey())
+                    .orElseThrow(() ->
+                            new IllegalStateException(
+                                    "Idempotency record expected but not found for key: "
+                                            + entity.getIdempotencyKey()
+                            )
+                    );
         }
-
-        entity.setCreatedAt(LocalDateTime.now());
-
-        return repository.save(entity);
     }
 
-    @Transactional
     public Optional<Idempotency> findByKey(String key) {
         return repository.findByIdempotencyKey(key);
     }
 
     @Transactional
-    public Idempotency markStatus (IdempotencyStatus status, Idempotency entity) {
+    public void markStatus (IdempotencyStatus status, Idempotency entity) {
         entity.setStatus(status);
         entity.setUpdatedAt(LocalDateTime.now());
-        return repository.save(entity);
+        repository.save(entity);
     }
 
     public void validateRequestHash (Idempotency entity, String requestHash) {

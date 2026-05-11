@@ -1,10 +1,9 @@
 package com.king.paysim.domain.transaction;
 
-import com.king.paysim.domain.transaction.entities.Transaction;
+import com.king.paysim.domain.transaction.entity.Transaction;
 import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -1,7 +1,7 @@
 package com.king.paysim.domain.transaction;
 
-import com.king.paysim.domain.transaction.dtos.CreateTransactionDto;
-import com.king.paysim.domain.transaction.entities.Transaction;
+import com.king.paysim.domain.transaction.dto.CreateTransactionDto;
+import com.king.paysim.domain.transaction.entity.Transaction;
 import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.user.UserRepository;
@@ -56,12 +56,12 @@ public class TransactionService {
                 .wallet(wallet)
                 .status(TransactionStatus.PENDING)
                 .type(payload.transactionType())
-                .providerRef(payload.providerRef().orElse(null))
-                .reference(payload.reference().orElse(UUID.randomUUID().toString()))
-                .narration(payload.narration().orElse(null))
-                .recipientAccountNumber(payload.recipientAccountNumber().orElse(null))
-                .recipientBankName(payload.recipientBankName().orElse(null))
-                .recipientAccountName(payload.recipientAccountName().orElse(null))
+                .providerRef(payload.providerRef())
+                .reference(payload.reference() != null ? payload.reference() : UUID.randomUUID().toString())
+                .narration(payload.narration())
+                .recipientAccountNumber(payload.recipientAccountNumber())
+                .recipientBankName(payload.recipientBankName())
+                .recipientAccountName(payload.recipientAccountName())
                 .fee(payload.fee())
                 .build();
 

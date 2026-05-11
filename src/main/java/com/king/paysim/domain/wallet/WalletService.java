@@ -1,8 +1,11 @@
 package com.king.paysim.domain.wallet;
 
+import com.king.paysim.common.util.JsonUtil;
+import com.king.paysim.domain.idempotency.IdempotencyService;
+import com.king.paysim.domain.idempotency.entity.Idempotency;
+import com.king.paysim.domain.idempotency.enums.IdempotencyStatus;
 import com.king.paysim.domain.transaction.TransactionService;
-import com.king.paysim.domain.transaction.dtos.CreateTransactionDto;
-import com.king.paysim.domain.transaction.entities.Transaction;
+import com.king.paysim.domain.transaction.dto.CreateTransactionDto;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.user.UserRepository;
 import com.king.paysim.domain.user.entity.User;
@@ -12,9 +15,11 @@ import com.king.paysim.domain.virtualaccount.VirtualAccountProvider;
 import com.king.paysim.domain.virtualaccount.VirtualAccountProviderFactory;
 import com.king.paysim.domain.wallet.dto.CreateWalletDto;
 import com.king.paysim.domain.wallet.dto.WithdrawalDto;
+import com.king.paysim.domain.wallet.dto.WithdrawalResult;
 import com.king.paysim.domain.wallet.entity.Wallet;
 import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
+import com.king.paysim.infrastructure.flutterwave.FlutterwaveService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,8 +27,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
-import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import java.util.UUID;
 
 @Slf4j
@@ -35,19 +43,28 @@ public class WalletService {
     private final VirtualAccountProviderFactory vAccountProviderFactory;
     private final String providerName;
     private final TransactionService transactionService;
+    private final FlutterwaveService flutterwaveService;
+    private final IdempotencyService idempotencyService;
+    private final String withdrawalHashSecret;
 
     public WalletService(
             WalletRepository walletRepository,
             UserRepository userRepository,
             VirtualAccountProviderFactory vAccountProviderFactory,
             @Value("${app.va.provider}") String providerName,
-            TransactionService transactionService
+            TransactionService transactionService,
+            FlutterwaveService flutterwaveService,
+            IdempotencyService idempotencyService,
+            @Value("WITHDRAWAL_HASH_SEC") String withdrawalHashSecret
     ) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
         this.vAccountProviderFactory = vAccountProviderFactory;
         this.providerName = providerName;
         this.transactionService = transactionService;
+        this.flutterwaveService = flutterwaveService;
+        this.idempotencyService = idempotencyService;
+        this.withdrawalHashSecret = withdrawalHashSecret;
     }
 
     @Transactional
@@ -88,9 +105,60 @@ public class WalletService {
         return walletRepository.save(wallet);
     }
 
-    public void withdraw(String userId, WithdrawalDto payload){
+    @Transactional
+    public WithdrawalResult withdraw(
+            String userId,
+            WithdrawalDto payload,
+            String idempotencyKey
+    ) {
+        String requestHash = generateWithdrawalHash(userId, payload, this.withdrawalHashSecret);
 
-        Wallet wallet = this.walletRepository.findByUserId(userId).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
+        Idempotency idempotency = idempotencyService.create(
+                new Idempotency(
+                        null,
+                        idempotencyKey,
+                        requestHash,
+                        null,
+                        IdempotencyStatus.PROCESSING,
+                        null,
+                        null
+                )
+        );
+        try {
+            // If already exists, validate request
+            idempotencyService.validateRequestHash(idempotency, requestHash);
+
+            // If already completed, return cached response
+            if (idempotencyService.isFinalState(idempotency)) {
+                return JsonUtil.deserialize(idempotency.getResponseBody(), WithdrawalResult.class);
+            }
+
+            WithdrawalResult response = this.doWithdraw(userId, payload);
+
+            idempotency.setResponseBody(JsonUtil.serialize(response));
+            idempotencyService.markStatus(IdempotencyStatus.SUCCESS, idempotency);
+
+            return response;
+
+        } catch (Exception ex) {
+            idempotencyService.markStatus(IdempotencyStatus.FAILED, idempotency);
+            throw ex;
+        }
+    }
+
+    private WithdrawalResult doWithdraw(String userId, WithdrawalDto payload) {
+        try {
+            this.flutterwaveService.initiateTransfer(payload);
+        } catch (Exception ex) {
+            String message = ex.getMessage() != null ? ex.getMessage() : "Failed to initiate withdrawal";
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, message);
+        }
+
+        Wallet wallet = this.walletRepository
+                .findByUserId(userId)
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Wallet not found")
+                );
 
         if (wallet.getBalance().compareTo(payload.amount()) < 0){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
@@ -101,19 +169,51 @@ public class WalletService {
 
         String reference = "paysim_withdrawal_" + UUID.randomUUID();
 
-        Transaction transaction = transactionService.create(new CreateTransactionDto(
+        transactionService.create(CreateTransactionDto.builder()
+                        .amount(payload.amount())
+                        .currency(WalletCurrency.NGN)
+                        .walletId(wallet.getId())
+                        .transactionType(TransactionType.WITHDRAWAL)
+                        .reference(reference)
+                        .narration(payload.narration())
+                        .recipientAccountNumber(payload.accountNumber())
+                        .recipientAccountName(payload.accountName())
+                        .fee(BigDecimal.ZERO)
+                        .build(),
+                userId);
+
+        return new WithdrawalResult(
+                reference,
                 payload.amount(),
                 WalletCurrency.NGN,
-                wallet.getId(),
-                TransactionType.WITHDRAWAL,
-                Optional.empty(),
-                Optional.of(reference),
-                payload.narration(),
-                Optional.of(payload.accountNumber()),
-                Optional.empty(),
-                Optional.ofNullable(payload.accountName()),
-                BigDecimal.ZERO
-        ), userId);
+                wallet.getStatus()
+        );
+    }
+
+    public String generateWithdrawalHash(
+            String userId,
+            WithdrawalDto dto,
+            String secret
+    ) {
+        try {
+            String payload = userId
+                    + "|"
+                    + dto.amount()
+                    + "|"
+                    + dto.accountNumber()
+                    + "|"
+                    + dto.narration();
+
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+
+            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+
+            return HexFormat.of().formatHex(hash);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate withdrawal hash", e);
+        }
     }
 
     public Wallet find(String userId) {

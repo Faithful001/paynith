@@ -1,7 +1,7 @@
 package com.king.paysim.domain.webhook.provider;
 
 import com.king.paysim.domain.transaction.TransactionService;
-import com.king.paysim.domain.transaction.dtos.CreateTransactionDto;
+import com.king.paysim.domain.transaction.dto.CreateTransactionDto;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.virtualaccount.enums.ProviderName;
 import com.king.paysim.domain.wallet.WalletRepository;
@@ -70,14 +70,12 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
                 .currency(charge.currency())
                 .walletId(wallet.getId())
                 .transactionType(TransactionType.CREDIT)
-                .providerRef(Optional.ofNullable(charge.flw_ref()))
-                .reference(Optional.ofNullable(txRef))
-                .narration(Optional.of("Wallet funding via bank transfer"))
-                .recipientAccountNumber(Optional.empty())
-                .recipientBankName(Optional.empty())
-                .recipientAccountName(Optional.empty())
+                .providerRef(charge.flw_ref())
+                .reference(txRef)
+                .narration("Wallet funding via bank transfer")
                 .fee(BigDecimal.ZERO)
                 .build();
+
         transactionService.create(transactionPayload, userId);
 
         log.info(

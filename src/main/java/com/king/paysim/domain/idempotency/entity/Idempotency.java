@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Idempotency {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

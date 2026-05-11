@@ -1,4 +1,4 @@
-package com.king.paysim.domain.transaction.entities;
+package com.king.paysim.domain.transaction.entity;
 
 import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;

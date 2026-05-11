@@ -1,4 +1,4 @@
-package com.king.paysim.domain.transaction.dtos;
+package com.king.paysim.domain.transaction.dto;
 
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.wallet.enums.WalletCurrency;
@@ -13,12 +13,12 @@ public record CreateTransactionDto(
         WalletCurrency currency,
         String walletId,
         TransactionType transactionType,
-        Optional<String> providerRef,
-        Optional<String> reference,
-        Optional<String> narration,
-        Optional<String> recipientAccountNumber,
-        Optional<String> recipientBankName,
-        Optional<String> recipientAccountName,
+        String providerRef,
+        String reference,
+        String narration,
+        String recipientAccountNumber,
+        String recipientBankName,
+        String recipientAccountName,
         BigDecimal fee
 ) {
 }
