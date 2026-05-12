@@ -128,8 +128,11 @@ public class WalletService {
             // If already exists, validate request
             idempotencyService.validateRequestHash(idempotency, requestHash);
 
+            log.info("idempotency status: {}", idempotency.getStatus());
+
             // If already completed, return cached response
             if (idempotencyService.isFinalState(idempotency)) {
+                log.info("is final state: {}", idempotency.getStatus());
                 return JsonUtil.deserialize(idempotency.getResponseBody(), WithdrawalResult.class);
             }
 

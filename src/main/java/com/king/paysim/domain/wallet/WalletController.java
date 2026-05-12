@@ -62,7 +62,10 @@ public class WalletController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PostMapping("/withdraw")
-    public ResponseEntity<Response<WithdrawalResult>> withdraw (@Valid @RequestBody WithdrawalDto payload, @RequestHeader("Idempotency-Key") String idempotencyKey){
+    public ResponseEntity<Response<WithdrawalResult>> withdraw (
+            @Valid @RequestBody WithdrawalDto payload,
+            @RequestHeader("Idempotency-Key") String idempotencyKey
+    ){
         String userId = this.authUtil.getAuthUserId();
 
         WithdrawalResult result = this.walletService.withdraw(userId, payload, idempotencyKey);
@@ -79,7 +82,9 @@ public class WalletController {
 
     // verify bank account before withdrawal
     @PostMapping("/verify-account")
-    public ResponseEntity<Response<?>> verifyAccount(@RequestBody VerifyAccountDto payload) {
+    public ResponseEntity<Response<?>> verifyAccount(
+            @Valid @RequestBody VerifyAccountDto payload
+    ) {
         Object result = flutterwaveService.verifyBankAccount(
                 payload.accountNumber(),
                 payload.bankCode()

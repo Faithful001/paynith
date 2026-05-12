@@ -11,38 +11,35 @@ import java.util.Optional;
 
 @Service
 public class IdempotencyService {
-    private final IdempotencyRepository repository;
+    private final IdempotencyRepository idempotencyRepository;
 
-    public IdempotencyService(IdempotencyRepository repository){
-        this.repository = repository;
+    public IdempotencyService(IdempotencyRepository idempotencyRepository){
+        this.idempotencyRepository = idempotencyRepository;
     }
 
     @Transactional
-    public Idempotency create(Idempotency entity) {
-        try {
-            return repository.save(entity);
-        } catch (DataIntegrityViolationException ex) {
+    public Idempotency create(Idempotency entity){
+        //check if the idempotency key already exists
+        Optional<Idempotency> existing = idempotencyRepository.findByIdempotencyKey(entity.getIdempotencyKey());
 
-            // Another request already created it
-            return repository.findByIdempotencyKey(entity.getIdempotencyKey())
-                    .orElseThrow(() ->
-                            new IllegalStateException(
-                                    "Idempotency record expected but not found for key: "
-                                            + entity.getIdempotencyKey()
-                            )
-                    );
+        if (existing.isPresent()){
+            return existing.get();
         }
+
+        entity.setCreatedAt(LocalDateTime.now());
+
+        return idempotencyRepository.save(entity);
     }
 
     public Optional<Idempotency> findByKey(String key) {
-        return repository.findByIdempotencyKey(key);
+        return idempotencyRepository.findByIdempotencyKey(key);
     }
 
     @Transactional
     public void markStatus (IdempotencyStatus status, Idempotency entity) {
         entity.setStatus(status);
         entity.setUpdatedAt(LocalDateTime.now());
-        repository.save(entity);
+        idempotencyRepository.save(entity);
     }
 
     public void validateRequestHash (Idempotency entity, String requestHash) {

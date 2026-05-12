@@ -70,10 +70,25 @@ public class FlutterwaveService {
                 "account_bank", bankCode
         );
 
+        log.info("flutterwave verify-bank request body", body);
+
+        log.info("Verifying account | bankCode={} | accountNumber={}", bankCode, accountNumber);
+
         return flwClient.post()
                 .uri("/accounts/resolve")
                 .bodyValue(body)
                 .retrieve()
+                .onStatus(
+                        status -> !status.is2xxSuccessful(),
+                        res -> res.bodyToMono(String.class)
+                                .map(err -> {
+                                    log.error("Flutterwave VERIFY error response: {}", err);
+                                    return new ResponseStatusException(
+                                            HttpStatus.BAD_GATEWAY,
+                                            "Flutterwave error: " + err
+                                    );
+                                })
+                )
                 .bodyToMono(Object.class)
                 .block();
     }

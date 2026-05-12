@@ -3,6 +3,8 @@ package com.king.paysim.domain.idempotency.entity;
 import com.king.paysim.domain.idempotency.enums.IdempotencyStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +26,8 @@ public class Idempotency {
     @Column(name = "request_hash", nullable = false)
     private String requestHash;
 
-    @Column(name = "response_body", nullable = false, columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "response_body", columnDefinition = "jsonb")
     private String responseBody;
 
     @Enumerated(EnumType.STRING)
