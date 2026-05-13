@@ -21,7 +21,7 @@ public class JwtUtil {
 
     // Generate JWT token
     public String generateToken(String userId) {
-        long expiration = 1000 * 60 * 60; // 1 hour
+        long expiration = 24000 * 60 * 60; // 24 hours
         return Jwts.builder()
                 .setSubject(userId)
                 .setIssuedAt(new Date())

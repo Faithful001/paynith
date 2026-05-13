@@ -1,11 +1,12 @@
 package com.king.paysim.infrastructure.flutterwave.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record GetBillInfoResult(
         FlutterwaveApiStatus status,
         String message,
-        Data data
+        List<Data> data
 ) {
     private record Data (
             Integer id,
@@ -19,7 +20,7 @@ public record GetBillInfoResult(
             String item_code,
             String short_name,
             BigDecimal fee,
-            BigDecimal commission_on_fee,
+            Boolean commission_on_fee,
             String reg_expression,
             String label_name,
             BigDecimal amount,

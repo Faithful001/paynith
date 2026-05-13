@@ -131,8 +131,17 @@ public class FlutterwaveService {
         return flwClient.get()
                 .uri("/billers/{billerCode}/items", billerCode)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
-                        .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Flutterwave error: " + err))))
+                .onStatus(
+                        HttpStatusCode::isError,
+                        res -> res.bodyToMono(String.class)
+                        .flatMap(
+                                err -> Mono.error(
+                                        new ResponseStatusException(
+                                                HttpStatus.BAD_GATEWAY,
+                                                "Flutterwave error: " + err)
+                                )
+                        )
+                )
                 .bodyToMono(GetBillInfoResult.class)
                 .block();
     }
