@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.king.paysim.domain.wallet.dto.Assignment;
 import com.king.paysim.domain.wallet.dto.Customer;
 
-public record PaystackSuccessDto(
+public record PaystackSuccessResult(
         String id,
 
         @JsonProperty("account_number") String accountNumber,

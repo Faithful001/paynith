@@ -13,12 +13,14 @@ import com.king.paysim.domain.virtualaccount.dto.VirtualAccountResult;
 import com.king.paysim.domain.virtualaccount.enums.ProviderName;
 import com.king.paysim.domain.virtualaccount.VirtualAccountProvider;
 import com.king.paysim.domain.virtualaccount.VirtualAccountProviderFactory;
+import com.king.paysim.domain.wallet.dto.BillPaymentDto;
 import com.king.paysim.domain.wallet.dto.CreateWalletDto;
 import com.king.paysim.domain.wallet.dto.WithdrawalDto;
-import com.king.paysim.domain.wallet.dto.WithdrawalResult;
+import com.king.paysim.domain.wallet.dto.TransactionResult;
 import com.king.paysim.domain.wallet.entity.Wallet;
 import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
+import com.king.paysim.domain.webhook.dto.FlutterwaveChargeCompletedResult;
 import com.king.paysim.infrastructure.flutterwave.FlutterwaveService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -106,7 +108,7 @@ public class WalletService {
     }
 
     @Transactional
-    public WithdrawalResult withdraw(
+    public TransactionResult withdraw(
             String userId,
             WithdrawalDto payload,
             String idempotencyKey
@@ -133,10 +135,12 @@ public class WalletService {
             // If already completed, return cached response
             if (idempotencyService.isFinalState(idempotency)) {
                 log.info("is final state: {}", idempotency.getStatus());
-                return JsonUtil.deserialize(idempotency.getResponseBody(), WithdrawalResult.class);
+                return JsonUtil.deserialize(idempotency.getResponseBody(), TransactionResult.class);
             }
+            
+            log.info("about to withdraw");
 
-            WithdrawalResult response = this.doWithdraw(userId, payload);
+            TransactionResult response = this.doWithdraw(userId, payload);
 
             idempotency.setResponseBody(JsonUtil.serialize(response));
             idempotencyService.markStatus(IdempotencyStatus.SUCCESS, idempotency);
@@ -149,13 +153,19 @@ public class WalletService {
         }
     }
 
-    private WithdrawalResult doWithdraw(String userId, WithdrawalDto payload) {
+    private TransactionResult doWithdraw(String userId, WithdrawalDto payload) {
         try {
             this.flutterwaveService.initiateTransfer(payload);
         } catch (Exception ex) {
             String message = ex.getMessage() != null ? ex.getMessage() : "Failed to initiate withdrawal";
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, message);
         }
+
+        return debitWallet(userId, payload);
+    }
+
+    @Transactional
+    public TransactionResult debitWallet (String userId, WithdrawalDto payload){
 
         Wallet wallet = this.walletRepository
                 .findByUserId(userId)
@@ -185,9 +195,84 @@ public class WalletService {
                         .build(),
                 userId);
 
-        return new WithdrawalResult(
+        return new TransactionResult(
                 reference,
                 payload.amount(),
+                WalletCurrency.NGN,
+                wallet.getStatus()
+        );
+    }
+
+    @Transactional
+    public TransactionResult debitForBillPayment(String userId, BillPaymentDto dto) {
+
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
+
+        if (wallet.getBalance().compareTo(dto.amount()) < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+        }
+
+        // Debit wallet
+        wallet.setBalance(wallet.getBalance().subtract(dto.amount()));
+        walletRepository.save(wallet);
+
+        // Create transaction record
+        transactionService.create(CreateTransactionDto.builder()
+                        .amount(dto.amount())
+                        .currency(dto.currency())
+                        .walletId(wallet.getId())
+                        .transactionType(TransactionType.BILL_PAYMENT)   // Make sure this enum exists
+                        .reference(dto.reference())
+                        .providerRef(dto.flwRef())
+                        .narration(dto.narration())
+                        .build(),
+                userId);
+
+        log.info("Wallet debited for bill payment | UserId={} | Amount={} | Ref={}",
+                userId, dto.amount(), dto.reference());
+
+        return new TransactionResult(dto.reference(), dto.amount(), dto.currency(), wallet.getStatus());
+    }
+
+    public TransactionResult creditWallet(
+            Wallet wallet,
+            FlutterwaveChargeCompletedResult charge,
+            String txRef,
+            String userId
+    ) {
+
+        BigDecimal amount = charge.amount();
+
+        // Update wallet balance
+        wallet.setBalance(wallet.getBalance().add(amount));
+        walletRepository.save(wallet);
+
+        // Create transaction record
+        CreateTransactionDto transactionPayload = CreateTransactionDto.builder()
+                .amount(amount)
+                .currency(charge.currency())
+                .walletId(wallet.getId())
+                .transactionType(TransactionType.CREDIT)
+                .providerRef(charge.flw_ref())
+                .reference(txRef)
+                .narration("Wallet funding via bank transfer")
+                .fee(BigDecimal.ZERO)
+                .build();
+
+        transactionService.create(transactionPayload, userId);
+
+        log.info(
+                "Wallet credited successfully | UserId={} | WalletId={} | Amount={} | Ref={}",
+                userId,
+                wallet.getId(),
+                amount,
+                txRef
+        );
+
+        return new TransactionResult(
+                txRef,
+                charge.amount(),
                 WalletCurrency.NGN,
                 wallet.getStatus()
         );

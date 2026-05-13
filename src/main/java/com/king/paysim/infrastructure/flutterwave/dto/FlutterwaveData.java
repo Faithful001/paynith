@@ -1,5 +1,7 @@
 package com.king.paysim.infrastructure.flutterwave.dto;
 
+import java.math.BigDecimal;
+
 public record FlutterwaveData(
         String response_code,
         String response_message,
@@ -11,5 +13,5 @@ public record FlutterwaveData(
         String created_at,
         String expiry_date,
         String note,
-        String amount
+        BigDecimal amount
 ) {}

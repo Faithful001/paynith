@@ -5,7 +5,7 @@ import com.king.paysim.common.util.AuthUtil;
 import com.king.paysim.domain.user.entity.User;
 import com.king.paysim.domain.wallet.dto.VerifyAccountDto;
 import com.king.paysim.domain.wallet.dto.WithdrawalDto;
-import com.king.paysim.domain.wallet.dto.WithdrawalResult;
+import com.king.paysim.domain.wallet.dto.TransactionResult;
 import com.king.paysim.domain.wallet.entity.Wallet;
 import com.king.paysim.infrastructure.flutterwave.FlutterwaveService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,13 +62,13 @@ public class WalletController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PostMapping("/withdraw")
-    public ResponseEntity<Response<WithdrawalResult>> withdraw (
+    public ResponseEntity<Response<TransactionResult>> withdraw (
             @Valid @RequestBody WithdrawalDto payload,
             @RequestHeader("Idempotency-Key") String idempotencyKey
     ){
         String userId = this.authUtil.getAuthUserId();
 
-        WithdrawalResult result = this.walletService.withdraw(userId, payload, idempotencyKey);
+        TransactionResult result = this.walletService.withdraw(userId, payload, idempotencyKey);
 
         return ResponseEntity.ok(Response.success("Withdrawal initiated", result));
     }

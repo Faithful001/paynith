@@ -1,19 +1,29 @@
 package com.king.paysim.domain.webhook;
 
+import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.virtualaccount.enums.ProviderName;
+import com.king.paysim.domain.wallet.WalletRepository;
+import com.king.paysim.domain.wallet.WalletService;
+import com.king.paysim.domain.wallet.dto.BillPaymentDto;
+import com.king.paysim.domain.wallet.dto.WithdrawalDto;
+import com.king.paysim.domain.wallet.entity.Wallet;
+import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import com.king.paysim.domain.webhook.provider.WebhookProvider;
 import com.king.paysim.domain.webhook.provider.WebhookProviderFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
@@ -26,6 +36,8 @@ public class WebhookController {
 
     private final ObjectMapper objectMapper;
     private final WebhookProviderFactory webhookProviderFactory;
+    private final WalletService walletService;
+    private final WalletRepository walletRepository;
 
     @Value("${PAYSTACK_SEC_KEY}")
     private String paystackSecretKey;
@@ -35,10 +47,14 @@ public class WebhookController {
 
     public WebhookController(
             ObjectMapper objectMapper,
-            WebhookProviderFactory webhookProviderFactory
+            WebhookProviderFactory webhookProviderFactory,
+            WalletService walletService,
+            WalletRepository walletRepository
     ) {
         this.objectMapper = objectMapper;
         this.webhookProviderFactory = webhookProviderFactory;
+        this.walletService = walletService;
+        this.walletRepository = walletRepository;
     }
 
     // ===================== FLUTTERWAVE =====================
@@ -76,6 +92,74 @@ public class WebhookController {
 
         } catch (Exception e) {
             log.error("Flutterwave webhook processing failed", e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @Operation(summary = "Handle Flutterwave bill payment webhook")
+    @PostMapping("/flutterwave/bill-payment")
+    public ResponseEntity<Void> handleBillPaymentWebhook(
+            @RequestHeader(value = "verif-hash", required = false) String signature,
+            @RequestBody String payload
+    ) {
+
+        log.info("Flutterwave bill payment webhook received. Signature: {}", signature);
+
+        if (signature == null || !signature.equals(flutterwaveSecret)) {
+            log.warn("Invalid Flutterwave webhook signature for bill payment");
+            return ResponseEntity.status(401).build();
+        }
+
+        try {
+            JsonNode root = objectMapper.readTree(payload);
+            String event = root.path("event").asText();
+            JsonNode data = root.path("data");
+
+            if (!"singlebillpayment.status".equals(event)) {
+                log.info("Ignoring non-bill payment event: {}", event);
+                return ResponseEntity.ok().build();
+            }
+
+            String status = data.path("status").asText();
+            String txRef = data.path("tx_ref").asText();
+            String flwRef = data.path("flw_ref").asText();
+
+            log.info("Bill payment webhook - tx_ref: {}, status: {}", txRef, status);
+
+            if (!"success".equalsIgnoreCase(status)) {
+                log.warn("Bill payment failed for ref: {}", txRef);
+                // Optionally update transaction status to FAILED
+                return ResponseEntity.ok().build();
+            }
+
+            // Extract needed fields
+            BigDecimal amount = data.path("amount").decimalValue();
+            String customerId = data.path("customer").asText();   // or customer_id
+            String network = data.path("network").asText();
+            String reference = data.path("reference").asText();   // Flutterwave's reference
+
+            // Extract userId from your tx_ref (e.g. paysim_64f8a1b2 → 64f8a1b2)
+            String userId = txRef.replace("paysim_", "");
+
+            BillPaymentDto billDto = BillPaymentDto.builder()
+                    .amount(amount)
+                    .currency(WalletCurrency.NGN)
+                    .reference(txRef)
+                    .flwRef(flwRef)
+                    .customerId(customerId)
+                    .network(network)
+                    .narration("Bill payment - " + network)
+                    .status(status)
+                    .message(data.path("message").asString())
+                    .build();
+
+            // Debit wallet and record bill payment
+            walletService.debitForBillPayment(userId, billDto);
+
+            return ResponseEntity.ok().build();
+
+        } catch (Exception e) {
+            log.error("Bill payment webhook processing failed", e);
             return ResponseEntity.status(500).build();
         }
     }

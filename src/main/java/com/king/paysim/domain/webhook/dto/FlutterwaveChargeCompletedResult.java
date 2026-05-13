@@ -2,20 +2,22 @@ package com.king.paysim.domain.webhook.dto;
 
 import com.king.paysim.domain.wallet.enums.WalletCurrency;
 
-public record FlutterwaveChargeCompletedDto(
+import java.math.BigDecimal;
+
+public record FlutterwaveChargeCompletedResult(
         String id,
         String tx_ref,
         String flw_ref,
-        long amount,
+        BigDecimal amount,
         WalletCurrency currency,
-        String charged_amount,
+        BigDecimal charged_amount,
         String status,
         String payment_type,
         String created_at,
         Customer customer
 ) {
     public record Customer(
-            long id,
+            String id,
             String name,
             String phone_number,
             String email,

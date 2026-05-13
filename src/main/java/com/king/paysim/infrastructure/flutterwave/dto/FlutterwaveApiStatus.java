@@ -1,6 +1,6 @@
 package com.king.paysim.infrastructure.flutterwave.dto;
 
-public enum FlutterwaveStatus {
+public enum FlutterwaveApiStatus {
     success,
-    failed
+    error
 }

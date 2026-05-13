@@ -2,7 +2,7 @@ package com.king.paysim.domain.webhook.provider;
 
 import com.king.paysim.domain.virtualaccount.enums.ProviderName;
 import com.king.paysim.domain.wallet.WalletRepository;
-import com.king.paysim.domain.webhook.dto.PaystackSuccessDto;
+import com.king.paysim.domain.webhook.dto.PaystackSuccessResult;
 import com.king.paysim.domain.wallet.entity.Wallet;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class PaystackWebhookProvider implements WebhookProvider {
         try {
             switch (event) {
                 case "dedicatedaccount.assign.success":
-                    PaystackSuccessDto dedicatedData = convertToDedicatedAccountData(data);
+                    PaystackSuccessResult dedicatedData = convertToDedicatedAccountData(data);
                     handleAssignSuccess(dedicatedData);
                     break;
 
@@ -55,9 +55,9 @@ public class PaystackWebhookProvider implements WebhookProvider {
         }
     }
 
-    private PaystackSuccessDto convertToDedicatedAccountData(JsonNode node) {
+    private PaystackSuccessResult convertToDedicatedAccountData(JsonNode node) {
         try {
-            return new ObjectMapper().treeToValue(node, PaystackSuccessDto.class);
+            return new ObjectMapper().treeToValue(node, PaystackSuccessResult.class);
         } catch (Exception e) {
             log.error("Failed to convert JsonNode to DedicatedAccountData", e);
             throw new RuntimeException("Failed to parse dedicated account data", e);
@@ -69,7 +69,7 @@ public class PaystackWebhookProvider implements WebhookProvider {
         return ProviderName.PAYSTACK;
     }
 
-    private void handleAssignSuccess(PaystackSuccessDto data) {
+    private void handleAssignSuccess(PaystackSuccessResult data) {
         if (data.customer() == null) {
             log.warn("No customer data in dedicatedaccount.assign.success");
             return;
@@ -111,9 +111,9 @@ public class PaystackWebhookProvider implements WebhookProvider {
 
         try {
             // Paystack sends amount in kobo (smallest unit)
-            long amountInKobo = data.path("amount").asLong(0);
+            BigDecimal amountInKobo = data.path("amount").decimalValue(BigDecimal.valueOf(0));
 
-            BigDecimal amountInNaira = BigDecimal.valueOf(amountInKobo)
+            BigDecimal amountInNaira = amountInKobo
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN);   // Fixed here
 
             String accountNumber = data.path("authorization")
