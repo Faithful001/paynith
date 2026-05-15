@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Users", description = "User management endpoints")
+@Tag(name = "User", description = "User management endpoints")
 @SecurityRequirement(name = "Bearer Auth")
 @RestController
 @RequestMapping("/users")

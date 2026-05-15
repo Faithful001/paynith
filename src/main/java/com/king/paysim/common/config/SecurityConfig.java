@@ -25,9 +25,18 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**",
                                 "/webhooks/**",
+
+                                // Swagger with context path
+                                "/api/v1/swagger-ui/**",
+                                "/api/v1/v3/api-docs/**",
+                                "/api/v1/swagger-resources/**",
+                                "/api/v1/swagger-config",
+                                "/api/v1/swagger-ui.html",
+
+                                // Fallback
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html"
+                                "/swagger-resources/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

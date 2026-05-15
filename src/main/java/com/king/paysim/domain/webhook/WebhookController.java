@@ -112,7 +112,7 @@ public class WebhookController {
 
         try {
             JsonNode root = objectMapper.readTree(payload);
-            String event = root.path("event").asText();
+            String event = root.path("event").asString();
             JsonNode data = root.path("data");
 
             if (!"singlebillpayment.status".equals(event)) {
@@ -120,9 +120,9 @@ public class WebhookController {
                 return ResponseEntity.ok().build();
             }
 
-            String status = data.path("status").asText();
-            String txRef = data.path("tx_ref").asText();
-            String flwRef = data.path("flw_ref").asText();
+            String status = data.path("status").asString();
+            String txRef = data.path("tx_ref").asString();
+            String flwRef = data.path("flw_ref").asString();
 
             log.info("Bill payment webhook - tx_ref: {}, status: {}", txRef, status);
 
@@ -134,9 +134,9 @@ public class WebhookController {
 
             // Extract needed fields
             BigDecimal amount = data.path("amount").decimalValue();
-            String customerId = data.path("customer").asText();   // or customer_id
-            String network = data.path("network").asText();
-            String reference = data.path("reference").asText();   // Flutterwave's reference
+            String customerId = data.path("customer").asString();   // or customer_id
+            String network = data.path("network").asString();
+            String reference = data.path("reference").asString();   // Flutterwave's reference
 
             // Extract userId from your tx_ref (e.g. paysim_64f8a1b2 → 64f8a1b2)
             String userId = txRef.replace("paysim_", "");
