@@ -22,6 +22,7 @@ import com.king.paysim.domain.wallet.enums.WalletCurrency;
 import com.king.paysim.domain.wallet.enums.WalletStatus;
 import com.king.paysim.domain.webhook.dto.FlutterwaveChargeCompletedResult;
 import com.king.paysim.infrastructure.flutterwave.FlutterwaveService;
+import com.king.paysim.infrastructure.flutterwave.dto.FlwChargeResponse;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -104,6 +105,9 @@ public class WalletService {
             wallet.setFailureReason(result.errorMessage());
         }
 
+        log.info("Virtual Account created for user {} | Bank: {} | Account: {}",
+                user.getId(), wallet.getBankName(), wallet.getAccountNumber());
+
         return walletRepository.save(wallet);
     }
 
@@ -137,7 +141,7 @@ public class WalletService {
                 log.info("is final state: {}", idempotency.getStatus());
                 return JsonUtil.deserialize(idempotency.getResponseBody(), TransactionResult.class);
             }
-            
+
             log.info("about to withdraw");
 
             TransactionResult response = this.doWithdraw(userId, payload);
@@ -222,7 +226,7 @@ public class WalletService {
                         .amount(dto.amount())
                         .currency(dto.currency())
                         .walletId(wallet.getId())
-                        .transactionType(TransactionType.BILL_PAYMENT)   // Make sure this enum exists
+                        .transactionType(TransactionType.PAYMENT)
                         .reference(dto.reference())
                         .providerRef(dto.flwRef())
                         .narration(dto.narration())
@@ -235,47 +239,55 @@ public class WalletService {
         return new TransactionResult(dto.reference(), dto.amount(), dto.currency(), wallet.getStatus());
     }
 
+    @Transactional
     public TransactionResult creditWallet(
             Wallet wallet,
-            FlutterwaveChargeCompletedResult charge,
+            Object chargeData,
             String txRef,
-            String userId
+            String userId,
+            String narration
     ) {
 
-        BigDecimal amount = charge.amount();
+        BigDecimal amount = BigDecimal.ZERO;
+        String flwRef = null;
+        String currency = "NGN";
 
-        // Update wallet balance
+        if (chargeData instanceof FlutterwaveChargeCompletedResult webhook) {
+            amount = webhook.amount();
+            flwRef = webhook.flw_ref();
+            currency = webhook.currency() != null ? webhook.currency().name() : "NGN";
+
+        } else if (chargeData instanceof FlwChargeResponse.FlwChargeData tokenData) {
+            amount = tokenData.amount() != null ? tokenData.amount() : BigDecimal.ZERO;
+            flwRef = tokenData.flw_ref();
+            currency = tokenData.currency() != null ? tokenData.currency() : "NGN";
+        }
+
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid amount received");
+        }
+
+        // Credit the wallet
         wallet.setBalance(wallet.getBalance().add(amount));
         walletRepository.save(wallet);
 
-        // Create transaction record
+        // Create transaction
         CreateTransactionDto transactionPayload = CreateTransactionDto.builder()
                 .amount(amount)
-                .currency(charge.currency())
+                .currency(WalletCurrency.NGN)
                 .walletId(wallet.getId())
                 .transactionType(TransactionType.CREDIT)
-                .providerRef(charge.flw_ref())
+                .providerRef(flwRef)
                 .reference(txRef)
-                .narration("Wallet funding via bank transfer")
+                .narration(narration)
                 .fee(BigDecimal.ZERO)
                 .build();
 
         transactionService.create(transactionPayload, userId);
 
-        log.info(
-                "Wallet credited successfully | UserId={} | WalletId={} | Amount={} | Ref={}",
-                userId,
-                wallet.getId(),
-                amount,
-                txRef
-        );
+        log.info("Wallet credited | UserId={} | Amount={} | Ref={}", userId, amount, txRef);
 
-        return new TransactionResult(
-                txRef,
-                charge.amount(),
-                WalletCurrency.NGN,
-                wallet.getStatus()
-        );
+        return new TransactionResult(txRef, amount, WalletCurrency.NGN, wallet.getStatus());
     }
 
     public String generateWithdrawalHash(

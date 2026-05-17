@@ -198,4 +198,72 @@ public class FlutterwaveService {
                 .bodyToMono(GetPaymentStatusResult.class)
                 .block();
     }
+
+    // ====================== CARD LINKING & PAYMENTS ======================
+
+    /**
+     * Direct Card Charge (First time - for card linking)
+     */
+    public Object directCardCharge(Map<String, Object> payload) {
+        return flwClient.post()
+                .uri("/charges?type=card")
+                .bodyValue(payload)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError,
+                        res -> res.bodyToMono(String.class)
+                                .flatMap(err -> {
+                                    log.error("Flutterwave Direct Charge Error: {}", err);
+                                    return Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, err));
+                                }))
+                .bodyToMono(Object.class)
+                .block();
+    }
+
+    /**
+     * Verify any transaction (used after direct charge or webhook)
+     */
+    public FlwTransactionResponse verifyTransaction(String txRef) {
+        return flwClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/transactions/verify_by_reference")
+                        .queryParam("tx_ref", txRef)
+                        .build())
+                .retrieve()
+                .onStatus(HttpStatusCode::isError,
+                        res -> res.bodyToMono(String.class)
+                                .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Verify failed: " + err))))
+                .bodyToMono(FlwTransactionResponse.class)
+                .block();
+    }
+
+    /**
+     * Tokenized Charge - Charge saved card (for deposits)
+     */
+    public FlwTokenizedChargeResponse tokenizedCharge(Map<String, Object> payload) {
+        return flwClient.post()
+                .uri("/tokenized-charges")
+                .bodyValue(payload)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError,
+                        res -> res.bodyToMono(String.class)
+                                .flatMap(err -> {
+                                    log.error("Tokenized Charge Error: {}", err);
+                                    return Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, err));
+                                }))
+                .bodyToMono(FlwTokenizedChargeResponse.class)
+                .block();
+    }
+
+    /**
+     * Get transactions from flutterwave by ID
+     */
+    public FlwTransactionResponse getTransactionById(Long transactionId) {
+        return flwClient.get()
+                .uri("/transactions/{id}/verify", transactionId)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
+                        .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, err))))
+                .bodyToMono(FlwTransactionResponse.class)
+                .block();
+    }
 }

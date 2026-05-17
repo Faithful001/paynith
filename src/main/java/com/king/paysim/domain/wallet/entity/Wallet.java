@@ -41,9 +41,9 @@ public class Wallet {
 
     private String accountNumber;
     private String bankName;
-    private String providerRef;   // flw_ref
-    private String orderRef;      // order_ref
-    private String paymentNote;   // note — shown to user when paying
+    private String providerRef;
+    private String orderRef;
+    private String paymentNote;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

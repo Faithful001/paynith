@@ -1,7 +1,6 @@
-package com.king.paysim.domain.bill.dto;
+package com.king.paysim.domain.payment.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 

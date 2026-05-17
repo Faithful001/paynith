@@ -120,7 +120,7 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
                     return new IllegalStateException("Wallet not found");
                 });
 
-        this.walletService.creditWallet(wallet, charge, txRef, userId);
+        this.walletService.creditWallet(wallet, charge, txRef, userId, "Wallet funding via bank transfer");
     }
 
     // Triggered when a virtual account receives a bank transfer
@@ -177,7 +177,7 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
                         return new IllegalStateException("Wallet not found");
                     });
 
-            this.walletService.creditWallet(wallet, charge, txRef, userId);
+            this.walletService.creditWallet(wallet, charge, txRef, userId, "Wallet funding via bank transfer");
 
         } catch (Exception e) {
             log.error("Failed to process charge.completed", e);
