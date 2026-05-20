@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Wallets", description = "Wallet management endpoints")
 @RestController
-@RequestMapping("/api/v1/wallets")
+@RequestMapping("/wallets")
 @SecurityRequirement(name = "Bearer Auth")
 @RequiredArgsConstructor
 public class WalletController {

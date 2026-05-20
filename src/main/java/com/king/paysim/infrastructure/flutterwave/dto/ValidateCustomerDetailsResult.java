@@ -5,7 +5,7 @@ public record ValidateCustomerDetailsResult(
         String message,
         Data data
 ) {
-    private record Data (
+    public record Data (
             String response_code,
             String address,
             String response_message,

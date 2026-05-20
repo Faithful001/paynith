@@ -7,7 +7,7 @@ public record GetBanksResult(
         String message,
         List<Data> data
 ) {
-    private record Data (
+    public record Data (
             Integer id,
             String code,
             String name

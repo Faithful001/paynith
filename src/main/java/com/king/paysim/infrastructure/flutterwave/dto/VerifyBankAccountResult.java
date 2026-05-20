@@ -5,7 +5,7 @@ public record VerifyBankAccountResult(
         String message,
         Data data
 ) {
-    private record Data (
+    public record Data (
             String account_number,
             String account_name
     ){}

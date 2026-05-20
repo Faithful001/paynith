@@ -8,7 +8,7 @@ public record GetBillInfoResult(
         String message,
         List<Data> data
 ) {
-    private record Data (
+    public record Data (
             Integer id,
             String biller_code,
             String name,

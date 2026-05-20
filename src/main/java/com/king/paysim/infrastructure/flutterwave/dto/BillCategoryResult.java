@@ -8,7 +8,7 @@ public record BillCategoryResult(
         List<Data> data
 
 ) {
-    private  record Data(
+    public record Data(
             Integer id,
             String name,
             String code,

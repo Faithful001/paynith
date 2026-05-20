@@ -7,7 +7,7 @@ public record GetPaymentStatusResult(
         String message,
         Data data
 ) {
-    private record Data (
+    public record Data (
             String tx_ref,
             BigDecimal amount,
             BigDecimal fee,

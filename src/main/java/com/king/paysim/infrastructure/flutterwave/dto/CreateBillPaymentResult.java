@@ -7,7 +7,7 @@ public record CreateBillPaymentResult(
         String message,
         Object data
 ) {
-    private record Data (
+    public record Data (
            String phone_number,
            BigDecimal amount,
            String network,

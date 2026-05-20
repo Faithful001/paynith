@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -60,16 +61,19 @@ public class FlutterwaveService {
     }
 
     // get list of banks for Nigeria
-    public GetBanksResult getBanks() {
-        return flwClient.get()
+    public List<GetBanksResult.Data> getBanks() {
+        GetBanksResult result = flwClient.get()
                 .uri("/banks/NG")
                 .retrieve()
                 .bodyToMono(GetBanksResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // verify bank account before withdrawal
-    public VerifyBankAccountResult verifyBankAccount(String accountNumber, String bankCode) {
+    public VerifyBankAccountResult.Data verifyBankAccount(String accountNumber, String bankCode) {
         Map<String, Object> body = Map.of(
                 "account_number", accountNumber,
                 "account_bank", bankCode
@@ -77,7 +81,7 @@ public class FlutterwaveService {
 
         log.info("Verifying account | bankCode={} | accountNumber={}", bankCode, accountNumber);
 
-        return flwClient.post()
+        VerifyBankAccountResult result = flwClient.post()
                 .uri("/accounts/resolve")
                 .bodyValue(body)
                 .retrieve()
@@ -94,11 +98,14 @@ public class FlutterwaveService {
                 )
                 .bodyToMono(VerifyBankAccountResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // get bill categories for a country
-    public BillCategoryResult getBillCategories(String country) {
-        return flwClient.get()
+    public List<BillCategoryResult.Data> getBillCategories(String country) {
+        BillCategoryResult result = flwClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/top-bill-categories")
                         .queryParam("country", country)
@@ -109,11 +116,14 @@ public class FlutterwaveService {
                         .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Flutterwave error: " + err))))
                 .bodyToMono(BillCategoryResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // get billers for a category
-    public GetBillerInfoResult getBillerInfo(String categoryCode, String country) {
-        return flwClient.get()
+    public List<GetBillerInfoResult.Data> getBillerInfo(String categoryCode, String country) {
+        GetBillerInfoResult result = flwClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/bills/{categoryCode}/billers")
                         .queryParam("country", country)
@@ -124,11 +134,14 @@ public class FlutterwaveService {
                         .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Flutterwave error: " + err))))
                 .bodyToMono(GetBillerInfoResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // get bill items/packages for a biller
-    public GetBillInfoResult getBillInfo(String billerCode) {
-        return flwClient.get()
+    public List<GetBillInfoResult.Data> getBillInfo(String billerCode) {
+        GetBillInfoResult result = flwClient.get()
                 .uri("/billers/{billerCode}/items", billerCode)
                 .retrieve()
                 .onStatus(
@@ -144,11 +157,14 @@ public class FlutterwaveService {
                 )
                 .bodyToMono(GetBillInfoResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // validate customer details before payment
-    public ValidateCustomerDetailsResult validateCustomerDetails(String itemCode, String customerId) {
-        return flwClient.get()
+    public ValidateCustomerDetailsResult.Data validateCustomerDetails(String itemCode, String customerId) {
+        ValidateCustomerDetailsResult result = flwClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/bill-items/{itemCode}/validate")
                         .queryParam("customer", customerId)
@@ -159,10 +175,13 @@ public class FlutterwaveService {
                         .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Flutterwave error: " + err))))
                 .bodyToMono(ValidateCustomerDetailsResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // create bill payment
-    public CreateBillPaymentResult createBillPayment(
+    public Object createBillPayment(
             String billerCode,
             String itemCode,
             String country,
@@ -178,7 +197,7 @@ public class FlutterwaveService {
         payload.put("reference", reference);
         if (callbackUrl != null) payload.put("callback_url", callbackUrl);
 
-        return flwClient.post()
+        CreateBillPaymentResult result = flwClient.post()
                 .uri("/billers/{billerCode}/items/{itemCode}/payment", billerCode, itemCode)
                 .bodyValue(payload)
                 .retrieve()
@@ -186,17 +205,23 @@ public class FlutterwaveService {
                         .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Flutterwave error: " + err))))
                 .bodyToMono(CreateBillPaymentResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // get payment status by reference
-    public GetPaymentStatusResult getPaymentStatus(String reference) {
-        return flwClient.get()
+    public GetPaymentStatusResult.Data getPaymentStatus(String reference) {
+        GetPaymentStatusResult result = flwClient.get()
                 .uri("/bills/{reference}", reference)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
                         .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Flutterwave error: " + err))))
                 .bodyToMono(GetPaymentStatusResult.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 
     // ====================== CARD LINKING & PAYMENTS ======================
@@ -223,7 +248,7 @@ public class FlutterwaveService {
      * Verify any transaction (used after direct charge or webhook)
      */
     public FlwTransactionResponse verifyTransaction(String txRef) {
-        return flwClient.get()
+        FlwTransactionResponse result = flwClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/transactions/verify_by_reference")
                         .queryParam("tx_ref", txRef)
@@ -234,13 +259,16 @@ public class FlutterwaveService {
                                 .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Verify failed: " + err))))
                 .bodyToMono(FlwTransactionResponse.class)
                 .block();
+
+        assert result != null;
+        return result;
     }
 
     /**
      * Tokenized Charge - Charge saved card (for deposits)
      */
     public FlwTokenizedChargeResponse tokenizedCharge(Map<String, Object> payload) {
-        return flwClient.post()
+        FlwTokenizedChargeResponse result =flwClient.post()
                 .uri("/tokenized-charges")
                 .bodyValue(payload)
                 .retrieve()
@@ -252,18 +280,24 @@ public class FlutterwaveService {
                                 }))
                 .bodyToMono(FlwTokenizedChargeResponse.class)
                 .block();
+
+        assert result != null;
+        return result;
     }
 
     /**
      * Get transactions from flutterwave by ID
      */
-    public FlwTransactionResponse getTransactionById(Long transactionId) {
-        return flwClient.get()
+    public FlwTransactionResponse.FlwTransactionData getTransactionById(Long transactionId) {
+        FlwTransactionResponse result = flwClient.get()
                 .uri("/transactions/{id}/verify", transactionId)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
                         .flatMap(err -> Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, err))))
                 .bodyToMono(FlwTransactionResponse.class)
                 .block();
+
+        assert result != null;
+        return result.data();
     }
 }
