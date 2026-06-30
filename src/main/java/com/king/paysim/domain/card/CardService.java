@@ -1,9 +1,9 @@
-package com.king.paysim.domain.linkedcard;
+package com.king.paysim.domain.card;
 
-import com.king.paysim.domain.linkedcard.dto.DirectCardChargeDto;
-import com.king.paysim.domain.linkedcard.dto.LinkedCardResponse;
-import com.king.paysim.domain.linkedcard.entity.LinkedCard;
-import com.king.paysim.domain.linkedcard.enums.LinkedCardStatus;
+import com.king.paysim.domain.card.dto.DirectCardChargeDto;
+import com.king.paysim.domain.card.dto.LinkedCardResponse;
+import com.king.paysim.domain.card.entity.Card;
+import com.king.paysim.domain.card.enums.CardStatus;
 import com.king.paysim.domain.user.entity.User;
 import com.king.paysim.infrastructure.flutterwave.FlutterwaveService;
 import com.king.paysim.infrastructure.flutterwave.dto.FlwTransactionResponse;
@@ -19,16 +19,16 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-public class LinkedCardService {
+public class CardService {
     private final FlutterwaveService flwService;
-    private final LinkedCardRepository linkedCardRepository;
+    private final CardRepository cardRepository;
 
-    public LinkedCardService(
+    public CardService(
             FlutterwaveService flwService,
-            LinkedCardRepository linkedCardRepository
+            CardRepository cardRepository
     ){
         this.flwService = flwService;
-        this.linkedCardRepository = linkedCardRepository;
+        this.cardRepository = cardRepository;
 
     }
 
@@ -50,7 +50,7 @@ public class LinkedCardService {
     }
 
     @Transactional
-    public LinkedCard confirmAndSaveCard(String txRef, User user) {
+    public Card confirmAndSaveCard(String txRef, User user) {
         FlwTransactionResponse tx = flwService.verifyTransaction(txRef);
 
         if (!"successful".equalsIgnoreCase(tx.status())) {
@@ -62,44 +62,44 @@ public class LinkedCardService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Card token not received");
         }
 
-        LinkedCard linkedCard = LinkedCard.builder()
+        Card card = Card.builder()
                 .user(user)
                 .cardToken(cardData.token())
                 .last4(cardData.last4digits())
                 .expiry(cardData.expiry())
                 .brand(cardData.brand())
                 .cardType(cardData.type())
-                .status(LinkedCardStatus.ACTIVE)
-                .isDefault(linkedCardRepository.countByUserId(user.getId()) == 0)
+                .status(CardStatus.ACTIVE)
+                .isDefault(cardRepository.countByUserId(user.getId()) == 0)
                 .build();
 
-        return linkedCardRepository.save(linkedCard);
+        return cardRepository.save(card);
     }
 
-    public Optional<LinkedCard> getLinkedCardById(String id, String userId) {
-        return linkedCardRepository.findByIdAndUserIdAndStatus(id, userId, LinkedCardStatus.ACTIVE);
+    public Optional<Card> getLinkedCardById(String id, String userId) {
+        return cardRepository.findByIdAndUserIdAndStatus(id, userId, CardStatus.ACTIVE);
     }
 
     public List<LinkedCardResponse> getUserLinkedCards(String userId) {
-        return linkedCardRepository.findByUserIdAndStatus(userId, LinkedCardStatus.ACTIVE)
+        return cardRepository.findByUserIdAndStatus(userId, CardStatus.ACTIVE)
                 .stream().map(LinkedCardResponse::fromEntity).toList();
     }
 
     @Transactional
-    public LinkedCard setDefaultCard(String userId, String cardId) {
+    public Card setDefaultCard(String userId, String cardId) {
         // Reset all cards to non-default
-        linkedCardRepository.resetDefaultCards(userId);
+        cardRepository.resetDefaultCards(userId);
 
-        return linkedCardRepository.findByIdAndUserId(cardId, userId)
+        return cardRepository.findByIdAndUserId(cardId, userId)
                 .map(card -> {
                     card.setIsDefault(true);
-                    return linkedCardRepository.save(card);
+                    return cardRepository.save(card);
                 })
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Card not found"));
     }
 
     @Transactional
     public void deleteLinkedCard(String userId, String cardId) {
-        linkedCardRepository.deleteByIdAndUserId(cardId, userId);
+        cardRepository.deleteByIdAndUserId(cardId, userId);
     }
 }

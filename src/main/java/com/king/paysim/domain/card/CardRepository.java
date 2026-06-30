@@ -1,7 +1,7 @@
-package com.king.paysim.domain.linkedcard;
+package com.king.paysim.domain.card;
 
-import com.king.paysim.domain.linkedcard.entity.LinkedCard;
-import com.king.paysim.domain.linkedcard.enums.LinkedCardStatus;
+import com.king.paysim.domain.card.entity.Card;
+import com.king.paysim.domain.card.enums.CardStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,17 +10,17 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface LinkedCardRepository extends JpaRepository<LinkedCard, String> {
+public interface CardRepository extends JpaRepository<Card, String> {
 
     long countByUserId(String userId);
 
-    List<LinkedCard> findByUserIdAndStatus(String userId, LinkedCardStatus status);
+    List<Card> findByUserIdAndStatus(String userId, CardStatus status);
 
-    Optional<LinkedCard> findByIdAndUserId(String id, String userId);
+    Optional<Card> findByIdAndUserId(String id, String userId);
 
-    Optional<LinkedCard> findByIdAndUserIdAndStatus(String id, String userId, LinkedCardStatus status);
+    Optional<Card> findByIdAndUserIdAndStatus(String id, String userId, CardStatus status);
 
-    Optional<LinkedCard> findByUserIdAndIsDefaultTrue(String userId);
+    Optional<Card> findByUserIdAndIsDefaultTrue(String userId);
 
     boolean existsByUserIdAndLast4AndBrand(String userId, String last4, String brand);
 

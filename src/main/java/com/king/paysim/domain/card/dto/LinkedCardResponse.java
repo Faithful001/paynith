@@ -1,6 +1,6 @@
-package com.king.paysim.domain.linkedcard.dto;
+package com.king.paysim.domain.card.dto;
 
-import com.king.paysim.domain.linkedcard.entity.LinkedCard;
+import com.king.paysim.domain.card.entity.Card;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +13,7 @@ public record LinkedCardResponse(
         boolean isDefault,
         LocalDateTime linkedAt
 ) {
-    public static LinkedCardResponse fromEntity(LinkedCard card) {
+    public static LinkedCardResponse fromEntity(Card card) {
         return new LinkedCardResponse(
                 card.getId(),
                 card.getLast4(),

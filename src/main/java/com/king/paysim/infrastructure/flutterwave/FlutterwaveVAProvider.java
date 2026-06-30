@@ -27,10 +27,11 @@ public class FlutterwaveVAProvider implements VirtualAccountProvider {
 
     @Override
     public VirtualAccountResult createVirtualAccount(User user, WalletCurrency currency) {
+        log.info("Inside the flw createVirtualAccount method");
         try {
             Map<String, Object> body = Map.of(
                     "email", user.getEmail(),
-                    "currency", currency,
+                    "currency", currency != null ? currency.name() : WalletCurrency.NGN,
                     "tx_ref", "paysim_" + user.getId(),
                     "phonenumber", user.getPhoneNumber(),
                     "is_permanent", true,
@@ -39,6 +40,8 @@ public class FlutterwaveVAProvider implements VirtualAccountProvider {
                     "narration", "PaySim wallet for " + user.getFirstName(),
                     "bvn", user.getBvn() != null ? user.getBvn() : "12345678901"
             );
+
+            log.info("virtual account numbers flw endpoint about to be called");
 
             FlutterwaveVAResponse response = flwClient.post().uri("/virtual-account-numbers").bodyValue(body)
                     .retrieve()

@@ -1,6 +1,6 @@
-package com.king.paysim.domain.linkedcard.entity;
+package com.king.paysim.domain.card.entity;
 
-import com.king.paysim.domain.linkedcard.enums.LinkedCardStatus;
+import com.king.paysim.domain.card.enums.CardStatus;
 import com.king.paysim.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LinkedCard {
+public class Card {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -46,7 +46,7 @@ public class LinkedCard {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private LinkedCardStatus status;    // ACTIVE, INACTIVE, EXPIRED, FAILED
+    private CardStatus status;    // ACTIVE, INACTIVE, EXPIRED, FAILED
 
     @Column
     private Boolean isDefault = false;

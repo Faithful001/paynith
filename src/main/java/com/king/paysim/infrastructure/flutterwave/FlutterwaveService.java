@@ -27,6 +27,7 @@ public class FlutterwaveService {
         this.flwClient = flwClient;
     }
 
+    // for the wallet domain
     public void initiateTransfer(WithdrawalDto payload) {
         Map<String, Object> body = Map.of(
                 "account_bank", payload.accountBank(),
@@ -60,7 +61,7 @@ public class FlutterwaveService {
         }
     }
 
-    // get list of banks for Nigeria
+    // get list of banks for Nigeria - wallet domain
     public List<GetBanksResult.Data> getBanks() {
         GetBanksResult result = flwClient.get()
                 .uri("/banks/NG")
@@ -72,7 +73,7 @@ public class FlutterwaveService {
         return result.data();
     }
 
-    // verify bank account before withdrawal
+    // verify bank account before withdrawal - wallet domain
     public VerifyBankAccountResult.Data verifyBankAccount(String accountNumber, String bankCode) {
         Map<String, Object> body = Map.of(
                 "account_number", accountNumber,

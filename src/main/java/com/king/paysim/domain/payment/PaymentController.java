@@ -3,10 +3,10 @@ package com.king.paysim.domain.payment;
 import com.king.paysim.common.response.Response;
 import com.king.paysim.common.util.AuthUtil;
 import com.king.paysim.domain.payment.dto.CreateBillPaymentDto;   // Keep existing DTO
-import com.king.paysim.domain.linkedcard.LinkedCardService;
-import com.king.paysim.domain.linkedcard.dto.ConfirmCardDto;
-import com.king.paysim.domain.linkedcard.dto.DirectCardChargeDto;
-import com.king.paysim.domain.linkedcard.dto.LinkedCardResponse;
+import com.king.paysim.domain.card.CardService;
+import com.king.paysim.domain.card.dto.ConfirmCardDto;
+import com.king.paysim.domain.card.dto.DirectCardChargeDto;
+import com.king.paysim.domain.card.dto.LinkedCardResponse;
 import com.king.paysim.domain.payment.dto.*;
 import com.king.paysim.domain.wallet.dto.TransactionResult;
 import com.king.paysim.domain.wallet.dto.WithdrawalDto;
@@ -32,32 +32,8 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final FlutterwaveService flutterwaveService;
-    private final LinkedCardService linkedCardService;
+    private final CardService cardService;
     private final AuthUtil authUtil;
-
-    // ====================== CARD LINKING ======================
-    @PostMapping("/cards/direct-charge")
-    public ResponseEntity<Response<Object>> directCardCharge(@Valid @RequestBody DirectCardChargeDto request) {
-        String userId = authUtil.getAuthUserId();
-        Object response = paymentService.initiateCardLinking(request, userId);
-        return ResponseEntity.ok(Response.success("Card charge initiated", response));
-    }
-
-    @PostMapping("/cards/confirm")
-    public ResponseEntity<Response<LinkedCardResponse>> confirmCardLinking(@Valid @RequestBody ConfirmCardDto request) {
-        var user = authUtil.getAuthUser();
-        var linkedCard = paymentService.confirmCardLinking(request.txRef(), user);
-        return ResponseEntity.ok(Response.success("Card linked successfully", LinkedCardResponse.fromEntity(linkedCard)));
-    }
-
-    @GetMapping("/cards")
-    public ResponseEntity<Response<List<LinkedCardResponse>>> getLinkedCards() {
-        String userId = authUtil.getAuthUserId();
-        List<LinkedCardResponse> cards = linkedCardService.getUserLinkedCards(userId);
-        return ResponseEntity.ok(Response.success("Linked cards retrieved", cards));
-    }
-
-    // ====================== PAYMENTS ======================
 
     @PostMapping("/pay/wallet")
     public ResponseEntity<Response<TransactionResult>> payWithWallet(@Valid @RequestBody PayWithWalletRequest request) {
@@ -78,66 +54,5 @@ public class PaymentController {
         String userId = authUtil.getAuthUserId();
         TransactionResult result = paymentService.payWithLinkedCard(request, userId);
         return ResponseEntity.ok(Response.success("Payment successful", result));
-    }
-
-    // ====================== BILL PAYMENTS ======================
-
-    @GetMapping("/bills/categories")
-    public ResponseEntity<Response<List<BillCategoryResult.Data>>> getBillCategories() {
-        List<BillCategoryResult.Data> result = flutterwaveService.getBillCategories("NG");
-        return ResponseEntity.ok(Response.success("Categories retrieved successfully", result));
-    }
-
-    @GetMapping("/bills/categories/{categoryCode}/billers")
-    public ResponseEntity<Response<List<GetBillerInfoResult.Data>>> getBillerInfo(@PathVariable String categoryCode) {
-        List<GetBillerInfoResult.Data> result = flutterwaveService.getBillerInfo(categoryCode, "NG");
-        return ResponseEntity.ok(Response.success("Billers retrieved successfully", result));
-    }
-
-    @GetMapping("/bills/billers/{billerCode}/items")
-    public ResponseEntity<Response<List<GetBillInfoResult.Data>>> getBillInfo(@PathVariable String billerCode) {
-        List<GetBillInfoResult.Data> result = flutterwaveService.getBillInfo(billerCode);
-        return ResponseEntity.ok(Response.success("Bill items retrieved successfully", result));
-    }
-
-    @GetMapping("/bills/items/{itemCode}/validate")
-    public ResponseEntity<Response<ValidateCustomerDetailsResult.Data>> validateCustomerDetails(
-            @PathVariable String itemCode, @RequestParam String customer) {
-        ValidateCustomerDetailsResult.Data result = flutterwaveService.validateCustomerDetails(itemCode, customer);
-        return ResponseEntity.ok(Response.success("Customer validated successfully", result));
-    }
-
-    @PostMapping("/bills/{billerCode}/items/{itemCode}/payment")
-    public ResponseEntity<Response<Object>> createBillPayment(
-            @PathVariable String billerCode,
-            @PathVariable String itemCode,
-            @Valid @RequestBody CreateBillPaymentDto payload
-    ) {
-
-        String reference = "paysim_bill_" + UUID.randomUUID() + "_PMCKDU_1";
-
-        Object result = flutterwaveService.createBillPayment(
-                billerCode,
-                itemCode,
-                "NG",
-                payload.customer(),
-                payload.amount(),
-                reference,
-                "https://reliable-chipmunk.outray.app/api/v1/webhook/flutterwave/bill-payment"
-        );
-
-        return ResponseEntity.ok(Response.success("Bill payment initiated", result));
-    }
-
-    // ====================== WITHDRAWAL ======================
-    @Operation(summary = "Withdraw funds from wallet")
-    @PostMapping("/withdraw")
-    public ResponseEntity<Response<TransactionResult>> withdraw(
-            @Valid @RequestBody WithdrawalDto payload,
-            @RequestHeader("Idempotency-Key") String idempotencyKey) {
-
-        String userId = authUtil.getAuthUserId();
-        TransactionResult result = paymentService.withdraw(userId, payload, idempotencyKey);
-        return ResponseEntity.ok(Response.success("Withdrawal initiated", result));
     }
 }

@@ -72,6 +72,7 @@ public class WalletService {
 
     @Transactional
     public Wallet create(CreateWalletDto dto) {
+        log.info("provider name {}", providerName);
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -83,6 +84,7 @@ public class WalletService {
                 .user(user)
                 .status(WalletStatus.PENDING)
                 .balance(BigDecimal.ZERO)
+                .currency(WalletCurrency.NGN)
                 .build();
 
         wallet = walletRepository.save(wallet);
@@ -208,7 +210,7 @@ public class WalletService {
     }
 
     @Transactional
-    public TransactionResult debitForBillPayment(String userId, BillPaymentDto dto) {
+    public void debitForBillPayment(String userId, BillPaymentDto dto) {
 
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
@@ -236,11 +238,11 @@ public class WalletService {
         log.info("Wallet debited for bill payment | UserId={} | Amount={} | Ref={}",
                 userId, dto.amount(), dto.reference());
 
-        return new TransactionResult(dto.reference(), dto.amount(), dto.currency(), wallet.getStatus());
+//        return new TransactionResult(dto.reference(), dto.amount(), dto.currency(), wallet.getStatus());
     }
 
     @Transactional
-    public TransactionResult creditWallet(
+    public void creditWallet(
             Wallet wallet,
             Object chargeData,
             String txRef,
@@ -287,7 +289,7 @@ public class WalletService {
 
         log.info("Wallet credited | UserId={} | Amount={} | Ref={}", userId, amount, txRef);
 
-        return new TransactionResult(txRef, amount, WalletCurrency.NGN, wallet.getStatus());
+//        return new TransactionResult(txRef, amount, WalletCurrency.NGN, wallet.getStatus());
     }
 
     public String generateWithdrawalHash(

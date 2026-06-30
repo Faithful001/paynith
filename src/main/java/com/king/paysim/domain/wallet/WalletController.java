@@ -53,6 +53,18 @@ public class WalletController {
         return ResponseEntity.ok(Response.success("Wallet retrieved", wallet));
     }
 
+    // ====================== WITHDRAWAL ======================
+    @Operation(summary = "Withdraw funds from wallet")
+    @PostMapping("/withdraw")
+    public ResponseEntity<Response<TransactionResult>> withdraw(
+            @Valid @RequestBody WithdrawalDto payload,
+            @RequestHeader("Idempotency-Key") String idempotencyKey) {
+
+        String userId = authUtil.getAuthUserId();
+        TransactionResult result = walletService.withdraw(userId, payload, idempotencyKey);
+        return ResponseEntity.ok(Response.success("Withdrawal initiated", result));
+    }
+
     // ====================== BANK UTILITIES ======================
 
     @Operation(summary = "Get list of Nigerian banks")

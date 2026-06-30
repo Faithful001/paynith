@@ -1,4 +1,4 @@
-package com.king.paysim.domain.linkedcard.dto;
+package com.king.paysim.domain.card.dto;
 
 import java.math.BigDecimal;
 

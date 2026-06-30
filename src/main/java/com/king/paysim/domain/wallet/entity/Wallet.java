@@ -28,7 +28,7 @@ public class Wallet {
 
     @Enumerated(EnumType.STRING)
     @Column
-    private WalletCurrency currency;
+    private WalletCurrency currency = WalletCurrency.NGN;
 
     @Column(nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;

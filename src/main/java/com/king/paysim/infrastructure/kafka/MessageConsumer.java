@@ -20,6 +20,7 @@ public class MessageConsumer {
         String userId = message.replace("\"", "");
         try{
             CreateWalletDto payload = new CreateWalletDto(userId);
+            log.info("payload {}", payload.toString());
             this.walletService.create(payload);
         } catch (Exception err){
             log.info("Consume wallet topic error", err);
