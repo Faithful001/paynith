@@ -10,9 +10,9 @@
 	</parent>
 
 	<groupId>com.king</groupId>
-	<artifactId>paysim</artifactId>
+	<artifactId>paynith</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>paysim</name>
+	<name>paynith</name>
 	<description>Payment simulator</description>
 	<url/>
 	<licenses>
