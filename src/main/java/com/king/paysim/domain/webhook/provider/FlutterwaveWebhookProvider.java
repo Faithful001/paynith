@@ -110,14 +110,12 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
             log.warn("Unexpected tx_ref format: {}", txRef); return;
         }
 
-        if (transactionService.existsByReference(txRef)) {
-            log.warn("Duplicate webhook ignored | Ref={}", txRef);
+        if (transactionService.existsByProviderRef(parsedData.flw_ref())) {
+            log.warn("Duplicate webhook ignored | FLW Ref={}", parsedData.flw_ref());
             return;
         }
 
-        String[] parts = txRef.split("_");
-
-        String userId = parts[parts.length - 1];
+        String userId = txRef.replace("paysim_", "");
 
         Wallet wallet = walletRepository.findWalletByUserId(userId)
                 .orElseThrow(() -> {
@@ -125,7 +123,13 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
                     return new IllegalStateException("Wallet not found");
                 });
 
-        this.walletService.creditWallet(wallet, parsedData, txRef, userId, "Wallet funding via bank transfer");
+        this.walletService.creditWallet(
+                wallet, 
+                parsedData, 
+                "paysim_dep_" + parsedData.flw_ref(), 
+                userId, 
+                "Wallet funding via bank transfer"
+        );
     }
 
     // Triggered when a virtual account receives a bank transfer

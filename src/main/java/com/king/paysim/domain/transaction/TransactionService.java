@@ -73,6 +73,11 @@ public class TransactionService {
         return transactionRepository.existsByReference(reference);
     }
 
+    public boolean existsByProviderRef(String providerRef) {
+        if (providerRef == null) return false;
+        return transactionRepository.findByProviderRef(providerRef).isPresent();
+    }
+
     // ===================== READ =====================
 
     public Transaction getById(String transactionId, String userId) {
