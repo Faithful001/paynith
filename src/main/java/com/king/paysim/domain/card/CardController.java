@@ -4,10 +4,9 @@ import com.king.paysim.common.response.Response;
 import com.king.paysim.common.util.AuthUtil;
 import com.king.paysim.domain.card.dto.ConfirmCardDto;
 import com.king.paysim.domain.card.dto.DirectCardChargeDto;
-import com.king.paysim.domain.card.dto.LinkedCardResponse;
+import com.king.paysim.domain.card.dto.CardResponse;
 import com.king.paysim.domain.card.entity.Card;
 import com.king.paysim.domain.user.entity.User;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,30 +47,30 @@ public class CardController {
     }
 
     @GetMapping
-    public ResponseEntity<Response<List<LinkedCardResponse>>> getMyLinkedCards() {
+    public ResponseEntity<Response<List<CardResponse>>> getMyCards() {
         String userId = authUtil.getAuthUserId();
-        List<LinkedCardResponse> cards = cardService.getUserLinkedCards(userId);
-        return ResponseEntity.ok(Response.success("All linked cards", cards));
+        List<CardResponse> cards = cardService.getUserCards(userId);
+        return ResponseEntity.ok(Response.success("All cards", cards));
     }
 
     @PatchMapping("/{id}/default")
-    public ResponseEntity<Response<LinkedCardResponse>> setDefaultCard(
+    public ResponseEntity<Response<CardResponse>> setDefaultCard(
             @PathVariable String id
     ) {
         String userId = authUtil.getAuthUserId();
         Card card = cardService.setDefaultCard(userId, id);
         return ResponseEntity.ok(Response.success(
                 "Card set successfully",
-                LinkedCardResponse.fromEntity(card))
+                CardResponse.fromEntity(card))
         );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLinkedCard(
+    public ResponseEntity<Void> deleteCard(
             @PathVariable String id
     ) {
         String userId = authUtil.getAuthUserId();
-        cardService.deleteLinkedCard(userId, id);
+        cardService.deleteCard(userId, id);
         return ResponseEntity.noContent().build();
     }
 }

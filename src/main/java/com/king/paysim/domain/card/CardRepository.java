@@ -25,7 +25,7 @@ public interface CardRepository extends JpaRepository<Card, String> {
     boolean existsByUserIdAndLast4AndBrand(String userId, String last4, String brand);
 
     @Modifying
-    @Query("UPDATE LinkedCard l SET l.isDefault = false WHERE l.user.id = :userId")
+    @Query("UPDATE Card l SET l.isDefault = false WHERE l.user.id = :userId")
     void resetDefaultCards(@Param("userId") String userId);
 
     void deleteByIdAndUserId(String id, String userId);

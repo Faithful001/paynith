@@ -4,7 +4,7 @@ import com.king.paysim.domain.card.entity.Card;
 
 import java.time.LocalDateTime;
 
-public record LinkedCardResponse(
+public record CardResponse(
         String id,
         String last4,
         String brand,
@@ -13,8 +13,8 @@ public record LinkedCardResponse(
         boolean isDefault,
         LocalDateTime linkedAt
 ) {
-    public static LinkedCardResponse fromEntity(Card card) {
-        return new LinkedCardResponse(
+    public static CardResponse fromEntity(Card card) {
+        return new CardResponse(
                 card.getId(),
                 card.getLast4(),
                 card.getBrand(),

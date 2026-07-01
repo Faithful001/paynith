@@ -54,7 +54,7 @@ public class TransactionService {
                 .currency(payload.currency())
                 .user(user)
                 .wallet(wallet)
-                .status(TransactionStatus.PENDING)
+                .status(payload.status() != null ? payload.status() : TransactionStatus.PENDING)
                 .type(payload.transactionType())
                 .providerRef(payload.providerRef())
                 .reference(payload.reference() != null ? payload.reference() : UUID.randomUUID().toString())

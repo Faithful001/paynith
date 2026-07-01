@@ -3,7 +3,7 @@ package com.king.paysim.domain.card.dto;
 import java.math.BigDecimal;
 
 public record DepositWithCardDto(
-    String linkedCardId,
+    String cardId,
     BigDecimal amount,
     String email,
     String narration

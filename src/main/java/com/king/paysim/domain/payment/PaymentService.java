@@ -55,7 +55,7 @@ public class PaymentService {
 
     @Transactional
     public TransactionResult payWithLinkedCard(PayWithCardRequest request, String userId) {
-        Card card = validateLinkedCard(request.linkedCardId(), userId);
+        Card card = validateLinkedCard(request.cardId(), userId);
 
         String txRef = "pay_" + UUID.randomUUID().toString().substring(0, 12);
 
@@ -76,9 +76,12 @@ public class PaymentService {
                     "Payment failed: " + chargeResponse.message());
         }
 
+        Wallet wallet = walletService.find(userId);
+
         transactionService.create(CreateTransactionDto.builder()
                 .amount(request.amount())
                 .currency(WalletCurrency.NGN)
+                .walletId(wallet.getId())
                 .transactionType(TransactionType.PAYMENT)
                 .reference(txRef)
                 .narration(request.narration())
@@ -92,7 +95,7 @@ public class PaymentService {
 
     @Transactional
     public TransactionResult fundWalletWithLinkedCard(DepositWithCardRequest request, String userId) {
-        Card card = validateLinkedCard(request.linkedCardId(), userId);
+        Card card = validateLinkedCard(request.cardId(), userId);
 
         String txRef = "dep-card-" + UUID.randomUUID().toString().substring(0, 12);
 
@@ -123,8 +126,8 @@ public class PaymentService {
 
     // ==================== HELPER ====================
 
-    private Card validateLinkedCard(String linkedCardId, String userId) {
-        Card card = cardService.getLinkedCardById(linkedCardId, userId)
+    private Card validateLinkedCard(String cardId, String userId) {
+        Card card = cardService.getCardById(cardId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Linked card not found"));
 
         if (card.getStatus() != CardStatus.ACTIVE) {

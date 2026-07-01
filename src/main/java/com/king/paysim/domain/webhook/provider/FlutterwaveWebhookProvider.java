@@ -3,6 +3,7 @@ package com.king.paysim.domain.webhook.provider;
 import com.king.paysim.domain.transaction.TransactionService;
 import com.king.paysim.domain.transaction.dto.CreateTransactionDto;
 import com.king.paysim.domain.transaction.enums.TransactionType;
+import com.king.paysim.domain.transaction.entity.Transaction;
 import com.king.paysim.domain.virtualaccount.enums.ProviderName;
 import com.king.paysim.domain.wallet.WalletRepository;
 import com.king.paysim.domain.wallet.WalletService;
@@ -95,14 +96,16 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
 
     @Transactional
     public void handleChargeCompleted(JsonNode data) {
-        FlutterwaveChargeCompletedResult charge = objectMapper
+        FlutterwaveChargeCompletedResult parsedData = objectMapper
                 .treeToValue(data, FlutterwaveChargeCompletedResult.class);
 
-        if (!"successful".equalsIgnoreCase(charge.status())) {
-            log.warn("Charge not successful: {}", charge.status()); return;
+        log.info("Parsed data from charge.completed {}", parsedData);
+
+        if (!"successful".equalsIgnoreCase(parsedData.status())) {
+            log.warn("Charge not successful: {}", parsedData.status()); return;
         }
         // extract userId from tx_ref "paysim_{userId}"
-        String txRef = charge.tx_ref();
+        String txRef = parsedData.tx_ref();
         if (txRef == null || !txRef.startsWith("paysim_")) {
             log.warn("Unexpected tx_ref format: {}", txRef); return;
         }
@@ -112,15 +115,17 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
             return;
         }
 
-        String userId = txRef.replace("paysim_", "");
+        String[] parts = txRef.split("_");
 
-        Wallet wallet = walletRepository.findByUserId(userId)
+        String userId = parts[parts.length - 1];
+
+        Wallet wallet = walletRepository.findWalletByUserId(userId)
                 .orElseThrow(() -> {
                     log.warn("Wallet not found for userId: {}", userId);
                     return new IllegalStateException("Wallet not found");
                 });
 
-        this.walletService.creditWallet(wallet, charge, txRef, userId, "Wallet funding via bank transfer");
+        this.walletService.creditWallet(wallet, parsedData, txRef, userId, "Wallet funding via bank transfer");
     }
 
     // Triggered when a virtual account receives a bank transfer
@@ -137,8 +142,10 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
 
             walletRepository.findByAccountNumber(accountNumber)
                     .ifPresentOrElse(wallet -> {
-                        wallet.setBalance(wallet.getBalance().add(amount));
-                        walletRepository.save(wallet);
+                        Wallet lockedWallet = walletRepository.findWalletById(wallet.getId())
+                                .orElseThrow(() -> new IllegalStateException("Wallet not found"));
+                        lockedWallet.setBalance(lockedWallet.getBalance().add(amount));
+                        walletRepository.save(lockedWallet);
                         log.info("Wallet funded via VA credit | Account={} | Amount={}",
                                 accountNumber, amount);
                     }, () -> log.warn("Wallet not found for account: {}", accountNumber));
@@ -152,35 +159,18 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
     @Transactional
     private void handleTransferCompleted(JsonNode data) {
         try {
-            FlutterwaveChargeCompletedResult charge = objectMapper
-                    .treeToValue(data, FlutterwaveChargeCompletedResult.class);
-
-            if (!"successful".equalsIgnoreCase(charge.status())) {
-                log.warn("Charge not successful: {}", charge.status()); return;
-            }
-            // extract userId from tx_ref "paysim_{userId}"
-            String txRef = charge.tx_ref();
-            if (txRef == null || !txRef.startsWith("paysim_")) {
-                log.warn("Unexpected tx_ref format: {}", txRef); return;
-            }
-
-            if (transactionService.existsByReference(txRef)) {
-                log.warn("Duplicate webhook ignored | Ref={}", txRef);
+            String reference = data.path("reference").asString(null);
+            if (reference == null) {
+                log.warn("Transfer completed webhook missing reference");
                 return;
             }
 
-            String userId = txRef.replace("paysim_", "");
-
-            Wallet wallet = walletRepository.findByUserId(userId)
-                    .orElseThrow(() -> {
-                        log.warn("Wallet not found for userId: {}", userId);
-                        return new IllegalStateException("Wallet not found");
-                    });
-
-            this.walletService.creditWallet(wallet, charge, txRef, userId, "Wallet funding via bank transfer");
+            Transaction transaction = transactionService.getByReference(reference);
+            transactionService.markAsSuccessful(transaction.getId());
+            log.info("Transfer completed successfully | Reference={}", reference);
 
         } catch (Exception e) {
-            log.error("Failed to process charge.completed", e);
+            log.error("Failed to process transfer.completed", e);
         }
     }
 
@@ -192,8 +182,17 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
 
             log.warn("Transfer failed | Reference={} | Reason={}", reference, reason);
 
-            // TODO: update transaction record status to FAILED
-            // and refund the wallet balance
+            Transaction transaction = transactionService.getByReference(reference);
+            transactionService.markAsFailed(transaction.getId(), reason);
+
+            // Lock and refund the wallet balance
+            Wallet wallet = walletRepository.findWalletById(transaction.getWallet().getId())
+                    .orElseThrow(() -> new IllegalStateException("Wallet not found"));
+            wallet.setBalance(wallet.getBalance().add(transaction.getAmount()));
+            walletRepository.save(wallet);
+
+            log.info("Wallet refunded successfully for failed transfer | Reference={} | Amount={}",
+                    reference, transaction.getAmount());
 
         } catch (Exception e) {
             log.error("Failed to process transfer.failed", e);
@@ -214,8 +213,10 @@ public class FlutterwaveWebhookProvider implements WebhookProvider {
             if (customerEmail != null) {
                 walletRepository.findByUserEmail(customerEmail)
                         .ifPresentOrElse(wallet -> {
-                            wallet.setBalance(wallet.getBalance().add(amount));
-                            walletRepository.save(wallet);
+                            Wallet lockedWallet = walletRepository.findWalletById(wallet.getId())
+                                    .orElseThrow(() -> new IllegalStateException("Wallet not found"));
+                            lockedWallet.setBalance(lockedWallet.getBalance().add(amount));
+                            walletRepository.save(lockedWallet);
                             log.info("Wallet refunded | Email={} | Amount={}", customerEmail, amount);
                         }, () -> log.warn("Wallet not found for refund email: {}", customerEmail));
             }

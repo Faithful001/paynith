@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
 
 public interface TransactionRepository extends JpaRepository<Transaction, String> {
     boolean existsByReference(String reference);
@@ -50,4 +52,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
             @Param("status") TransactionStatus status
     );
 
+    List<Transaction> findByStatusAndCreatedAtBefore(TransactionStatus status, LocalDateTime beforeTime);
 }

@@ -11,29 +11,28 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/bills")
+@RequestMapping ("/bills")
 public class BillController {
     private final FlutterwaveService flutterwaveService;
 
-    @GetMapping("/bills/categories")
+    @GetMapping("/categories")
     public ResponseEntity<Response<List<BillCategoryResult.Data>>> getBillCategories() {
         List<BillCategoryResult.Data> result = flutterwaveService.getBillCategories("NG");
         return ResponseEntity.ok(Response.success("Categories retrieved successfully", result));
     }
 
-    @GetMapping("/bills/categories/{categoryCode}/billers")
+    @GetMapping("/categories/{categoryCode}/billers")
     public ResponseEntity<Response<List<GetBillerInfoResult.Data>>> getBillerInfo(@PathVariable String categoryCode) {
         List<GetBillerInfoResult.Data> result = flutterwaveService.getBillerInfo(categoryCode, "NG");
         return ResponseEntity.ok(Response.success("Billers retrieved successfully", result));
     }
 
-    @GetMapping("/bills/billers/{billerCode}/items")
+    @GetMapping("/billers/{billerCode}/items")
     public ResponseEntity<Response<List<GetBillInfoResult.Data>>> getBillInfo(@PathVariable String billerCode) {
         List<GetBillInfoResult.Data> result = flutterwaveService.getBillInfo(billerCode);
         return ResponseEntity.ok(Response.success("Bill items retrieved successfully", result));
@@ -46,7 +45,7 @@ public class BillController {
         return ResponseEntity.ok(Response.success("Customer validated successfully", result));
     }
 
-    @PostMapping("/bills/{billerCode}/items/{itemCode}/payment")
+    @PostMapping("/{billerCode}/items/{itemCode}/payment")
     public ResponseEntity<Response<Object>> createBillPayment(
             @PathVariable String billerCode,
             @PathVariable String itemCode,

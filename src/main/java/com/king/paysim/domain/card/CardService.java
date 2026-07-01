@@ -1,7 +1,7 @@
 package com.king.paysim.domain.card;
 
 import com.king.paysim.domain.card.dto.DirectCardChargeDto;
-import com.king.paysim.domain.card.dto.LinkedCardResponse;
+import com.king.paysim.domain.card.dto.CardResponse;
 import com.king.paysim.domain.card.entity.Card;
 import com.king.paysim.domain.card.enums.CardStatus;
 import com.king.paysim.domain.user.entity.User;
@@ -76,13 +76,13 @@ public class CardService {
         return cardRepository.save(card);
     }
 
-    public Optional<Card> getLinkedCardById(String id, String userId) {
+    public Optional<Card> getCardById(String id, String userId) {
         return cardRepository.findByIdAndUserIdAndStatus(id, userId, CardStatus.ACTIVE);
     }
 
-    public List<LinkedCardResponse> getUserLinkedCards(String userId) {
+    public List<CardResponse> getUserCards(String userId) {
         return cardRepository.findByUserIdAndStatus(userId, CardStatus.ACTIVE)
-                .stream().map(LinkedCardResponse::fromEntity).toList();
+                .stream().map(CardResponse::fromEntity).toList();
     }
 
     @Transactional
@@ -99,7 +99,7 @@ public class CardService {
     }
 
     @Transactional
-    public void deleteLinkedCard(String userId, String cardId) {
+    public void deleteCard(String userId, String cardId) {
         cardRepository.deleteByIdAndUserId(cardId, userId);
     }
 }

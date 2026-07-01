@@ -6,6 +6,7 @@ import com.king.paysim.domain.idempotency.entity.Idempotency;
 import com.king.paysim.domain.idempotency.enums.IdempotencyStatus;
 import com.king.paysim.domain.transaction.TransactionService;
 import com.king.paysim.domain.transaction.dto.CreateTransactionDto;
+import com.king.paysim.domain.transaction.enums.TransactionStatus;
 import com.king.paysim.domain.transaction.enums.TransactionType;
 import com.king.paysim.domain.user.UserRepository;
 import com.king.paysim.domain.user.entity.User;
@@ -58,7 +59,7 @@ public class WalletService {
             TransactionService transactionService,
             FlutterwaveService flutterwaveService,
             IdempotencyService idempotencyService,
-            @Value("WITHDRAWAL_HASH_SEC") String withdrawalHashSecret
+            @Value("${WITHDRAWAL_HASH_SEC") String withdrawalHashSecret
     ) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
@@ -174,7 +175,7 @@ public class WalletService {
     public TransactionResult debitWallet (String userId, WithdrawalDto payload){
 
         Wallet wallet = this.walletRepository
-                .findByUserId(userId)
+                .findWalletByUserId(userId)
                 .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Wallet not found")
                 );
@@ -212,7 +213,7 @@ public class WalletService {
     @Transactional
     public void debitForBillPayment(String userId, BillPaymentDto dto) {
 
-        Wallet wallet = walletRepository.findByUserId(userId)
+        Wallet wallet = walletRepository.findWalletByUserId(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found"));
 
         if (wallet.getBalance().compareTo(dto.amount()) < 0) {
@@ -279,6 +280,7 @@ public class WalletService {
                 .currency(WalletCurrency.NGN)
                 .walletId(wallet.getId())
                 .transactionType(TransactionType.CREDIT)
+                .status(TransactionStatus.SUCCESSFUL)
                 .providerRef(flwRef)
                 .reference(txRef)
                 .narration(narration)

@@ -2,26 +2,16 @@ package com.king.paysim.domain.payment;
 
 import com.king.paysim.common.response.Response;
 import com.king.paysim.common.util.AuthUtil;
-import com.king.paysim.domain.payment.dto.CreateBillPaymentDto;   // Keep existing DTO
 import com.king.paysim.domain.card.CardService;
-import com.king.paysim.domain.card.dto.ConfirmCardDto;
-import com.king.paysim.domain.card.dto.DirectCardChargeDto;
-import com.king.paysim.domain.card.dto.LinkedCardResponse;
 import com.king.paysim.domain.payment.dto.*;
 import com.king.paysim.domain.wallet.dto.TransactionResult;
-import com.king.paysim.domain.wallet.dto.WithdrawalDto;
 import com.king.paysim.infrastructure.flutterwave.FlutterwaveService;
-import com.king.paysim.infrastructure.flutterwave.dto.*;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @Tag(name = "Payments", description = "All payment operations (Wallet, Card, Bills, Transfers)")
 @RestController

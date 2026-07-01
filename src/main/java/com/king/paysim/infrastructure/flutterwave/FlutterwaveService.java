@@ -301,4 +301,28 @@ public class FlutterwaveService {
         assert result != null;
         return result.data();
     }
+
+    /**
+     * Get transfer status by reference from Flutterwave
+     */
+    public tools.jackson.databind.JsonNode verifyTransfer(String reference) {
+        try {
+            return flwClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/transfers")
+                            .queryParam("reference", reference)
+                            .build())
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
+                            .flatMap(err -> {
+                                log.error("Verify transfer failed: {}", err);
+                                return Mono.error(new ResponseStatusException(HttpStatus.BAD_GATEWAY, err));
+                            }))
+                    .bodyToMono(tools.jackson.databind.JsonNode.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Failed to check transfer status for ref: {}", reference, e);
+            return null;
+        }
+    }
 }
