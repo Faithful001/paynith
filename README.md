@@ -74,4 +74,4 @@ Once the application is running, you can explore the REST endpoints via the Swag
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is proprietary and confidential. All rights reserved by Faithful001. See the [LICENSE](LICENSE) file for more details.
