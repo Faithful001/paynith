@@ -39,10 +39,10 @@ public class WebhookController {
     private final WalletService walletService;
     private final WalletRepository walletRepository;
 
-    @Value("${PAYSTACK_SEC_KEY}")
+    @Value("${paystack.secret.key}")
     private String paystackSecretKey;
 
-    @Value("${FLUTTERWAVE_WEBHOOK_HASH}")
+    @Value("${flutterwave.webhook.hash}")
     private String flutterwaveSecret;
 
     public WebhookController(

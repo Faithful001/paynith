@@ -59,7 +59,7 @@ public class WalletService {
             TransactionService transactionService,
             FlutterwaveService flutterwaveService,
             IdempotencyService idempotencyService,
-            @Value("${WITHDRAWAL_HASH_SEC}") String withdrawalHashSecret
+            @Value("${withdrawal.hash.secret}") String withdrawalHashSecret
     ) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;

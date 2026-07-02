@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class PaystackClient {
     @Bean("paystackWebClient")
-    public WebClient paystackClient(@Value("${FLUTTERWAVE_SEC_KEY}") String secretKey) {
+    public WebClient paystackClient(@Value("${flutterwave.secret.key}") String secretKey) {
         return WebClient.builder()
                 .baseUrl("https://api.paystack.co")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
