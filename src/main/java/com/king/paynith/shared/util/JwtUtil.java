@@ -1,4 +1,4 @@
-package com.king.paynith.common.util;
+package com.king.paynith.shared.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

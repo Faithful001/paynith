@@ -1,4 +1,4 @@
-package com.king.paynith.common.config;
+package com.king.paynith.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

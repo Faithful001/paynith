@@ -1,6 +1,6 @@
-package com.king.paynith.common.exception;
+package com.king.paynith.shared.exception;
 
-import com.king.paynith.common.response.Response;
+import com.king.paynith.shared.response.Response;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

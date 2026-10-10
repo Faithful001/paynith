@@ -1,6 +1,5 @@
-package com.king.paynith.common.util;
+package com.king.paynith.shared.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 

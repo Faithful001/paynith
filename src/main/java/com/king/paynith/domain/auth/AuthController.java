@@ -1,6 +1,6 @@
 package com.king.paynith.domain.auth;
 
-import com.king.paynith.common.response.Response;
+import com.king.paynith.shared.response.Response;
 import com.king.paynith.domain.auth.dto.LoginRequestDto;
 import com.king.paynith.domain.auth.dto.LoginResponseDto;
 import com.king.paynith.domain.auth.dto.RegisterRequestDto;

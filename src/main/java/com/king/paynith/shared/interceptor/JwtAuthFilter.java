@@ -1,6 +1,6 @@
-package com.king.paynith.common.interceptor;
+package com.king.paynith.shared.interceptor;
 
-import com.king.paynith.common.util.JwtUtil;
+import com.king.paynith.shared.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

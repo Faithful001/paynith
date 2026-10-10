@@ -1,6 +1,6 @@
 package com.king.paynith.domain.wallet;
 
-import com.king.paynith.common.util.JsonUtil;
+import com.king.paynith.shared.util.JsonUtil;
 import com.king.paynith.domain.idempotency.IdempotencyService;
 import com.king.paynith.domain.idempotency.entity.Idempotency;
 import com.king.paynith.domain.idempotency.enums.IdempotencyStatus;

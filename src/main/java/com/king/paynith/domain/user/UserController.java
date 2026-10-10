@@ -1,6 +1,6 @@
 package com.king.paynith.domain.user;
 
-import com.king.paynith.common.response.Response;
+import com.king.paynith.shared.response.Response;
 import com.king.paynith.domain.user.dto.UpdateUserDto;
 import com.king.paynith.domain.user.dto.UserResponseDto;
 import com.king.paynith.domain.user.entity.User;

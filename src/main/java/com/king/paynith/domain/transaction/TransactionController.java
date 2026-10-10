@@ -1,8 +1,8 @@
 package com.king.paynith.domain.transaction;
 
-import com.king.paynith.common.response.PaginatedResponse;
-import com.king.paynith.common.response.Response;
-import com.king.paynith.common.util.AuthUtil;
+import com.king.paynith.shared.response.PaginatedResponse;
+import com.king.paynith.shared.response.Response;
+import com.king.paynith.shared.util.AuthUtil;
 import com.king.paynith.domain.transaction.entity.Transaction;
 import com.king.paynith.domain.transaction.enums.TransactionStatus;
 import com.king.paynith.domain.transaction.enums.TransactionType;

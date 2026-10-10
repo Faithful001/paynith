@@ -1,10 +1,9 @@
 package com.king.paynith.domain.wallet;
 
-import com.king.paynith.common.response.Response;
-import com.king.paynith.common.util.AuthUtil;
+import com.king.paynith.shared.response.Response;
+import com.king.paynith.shared.util.AuthUtil;
 import com.king.paynith.domain.payment.PaymentService;
 import com.king.paynith.domain.user.entity.User;
-import com.king.paynith.domain.wallet.dto.CreateWalletDto;
 import com.king.paynith.domain.wallet.dto.TransactionResult;
 import com.king.paynith.domain.wallet.dto.VerifyAccountDto;
 import com.king.paynith.domain.wallet.dto.WithdrawalDto;
@@ -12,14 +11,10 @@ import com.king.paynith.domain.wallet.entity.Wallet;
 import com.king.paynith.infrastructure.flutterwave.FlutterwaveService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

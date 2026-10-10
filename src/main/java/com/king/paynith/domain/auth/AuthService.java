@@ -1,6 +1,6 @@
 package com.king.paynith.domain.auth;
 
-import com.king.paynith.common.util.JwtUtil;
+import com.king.paynith.shared.util.JwtUtil;
 import com.king.paynith.infrastructure.kafka.MessageProducer;
 import com.king.paynith.domain.auth.dto.LoginRequestDto;
 import com.king.paynith.domain.auth.dto.LoginResponseDto;

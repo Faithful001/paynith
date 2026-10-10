@@ -1,4 +1,4 @@
-package com.king.paynith.common.util;
+package com.king.paynith.shared.util;
 
 import com.king.paynith.domain.user.UserRepository;
 import com.king.paynith.domain.user.entity.User;

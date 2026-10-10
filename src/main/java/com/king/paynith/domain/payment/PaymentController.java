@@ -1,7 +1,7 @@
 package com.king.paynith.domain.payment;
 
-import com.king.paynith.common.response.Response;
-import com.king.paynith.common.util.AuthUtil;
+import com.king.paynith.shared.response.Response;
+import com.king.paynith.shared.util.AuthUtil;
 import com.king.paynith.domain.card.CardService;
 import com.king.paynith.domain.payment.dto.*;
 import com.king.paynith.domain.wallet.dto.TransactionResult;

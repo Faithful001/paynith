@@ -1,6 +1,6 @@
-package com.king.paynith.common.interceptor;
+package com.king.paynith.shared.interceptor;
 
-import com.king.paynith.common.response.Response;
+import com.king.paynith.shared.response.Response;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;

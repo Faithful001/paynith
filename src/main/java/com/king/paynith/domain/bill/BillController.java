@@ -1,6 +1,6 @@
 package com.king.paynith.domain.bill;
 
-import com.king.paynith.common.response.Response;
+import com.king.paynith.shared.response.Response;
 import com.king.paynith.domain.payment.dto.CreateBillPaymentDto;
 import com.king.paynith.infrastructure.flutterwave.FlutterwaveService;
 import com.king.paynith.infrastructure.flutterwave.dto.BillCategoryResult;

@@ -1,6 +1,6 @@
-package com.king.paynith.common.config;
+package com.king.paynith.config;
 
-import com.king.paynith.common.interceptor.JwtAuthFilter;
+import com.king.paynith.shared.interceptor.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

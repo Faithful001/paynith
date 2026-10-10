@@ -1,4 +1,4 @@
-package com.king.paynith.common.response;
+package com.king.paynith.shared.response;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
